@@ -127,11 +127,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="activation.c" />
+    <ClCompile Include="dataset.c" />
     <ClCompile Include="kan.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="mlp.c" />
+    <ClCompile Include="util.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="activation.h" />
+    <ClInclude Include="dataset.h" />
     <ClInclude Include="kan.h" />
+    <ClInclude Include="mlp.h" />
+    <ClInclude Include="util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
