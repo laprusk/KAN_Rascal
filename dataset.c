@@ -3,7 +3,12 @@
 #include <stdlib.h>
 
 
-void load_dataset(DataSet* dataset) {
+void load_dataset(
+	double train_data[][DIM],
+	double test_data[][DIM],
+	int train_label[],
+	int test_label[]
+) {
 	FILE* fp;
 	errno_t r;
 
@@ -14,9 +19,9 @@ void load_dataset(DataSet* dataset) {
 		for (int j = 0; j < DIM; ++j) {
 			int temp;
 			fscanf_s(fp, "%d, ", &temp);
-			dataset->train_data[i][j] = temp / MAXV;
+			train_data[i][j] = temp / MAXV;
 		}
-		fscanf_s(fp, "%d\n", &dataset->train_label[i]);
+		fscanf_s(fp, "%d\n", &train_label[i]);
 	}
 	fclose(fp);
 
@@ -27,16 +32,16 @@ void load_dataset(DataSet* dataset) {
 		for (int j = 0; j < DIM; ++j) {
 			int temp;
 			fscanf_s(fp, "%d, ", &temp);
-			dataset->test_data[i][j] = temp / MAXV;
+			test_data[i][j] = temp / MAXV;
 		}
-		fscanf_s(fp, "%d\n", &dataset->test_label[i]);
+		fscanf_s(fp, "%d\n", &test_label[i]);
 	}
 	fclose(fp);
 }
 
 
-void convert_one_hot(int label, bool* tk, int num_classes) {
-	for (int i = 0; i < num_classes; ++i) {
+void convert_one_hot(int label, bool* tk) {
+	for (int i = 0; i < NUM_CLASSES; ++i) {
 		tk[i] = (i == label) ? 1 : 0;
 	}
 }

@@ -128,6 +128,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="activation.c" />
+    <ClCompile Include="cnn.c" />
     <ClCompile Include="dataset.c" />
     <ClCompile Include="kan.c" />
     <ClCompile Include="main.c" />
@@ -136,6 +137,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="activation.h" />
+    <ClInclude Include="cnn.h" />
     <ClInclude Include="dataset.h" />
     <ClInclude Include="kan.h" />
     <ClInclude Include="mlp.h" />

@@ -5,28 +5,45 @@
 #include <stdbool.h>
 
 
-const int MLP_EPOCH_MAX = 10;
+// 定数
+const int EPOCH_MAX = 10;
 
 
-DataSet dataset;
+// MLP
+int mlp_num_nodes[MLP_NUM_LAYERS] = {DIM, DIM, NUM_CLASSES};
+const Activation HIDDEN_ACTIVATION = RELU;
+const Activation OUTPUT_ACTIVATION = SOFTMAX;
+// online
+double mlp_out[MLP_NUM_LAYERS][MLP_MAX_NODES];
+double mlp_delta[MLP_NUM_LAYERS][MLP_MAX_NODES];
+double mlp_weight[MLP_NUM_LAYERS - 1][MLP_MAX_NODES][MLP_MAX_NODES];
+double mlp_bias[MLP_NUM_LAYERS - 1][MLP_MAX_NODES];
+// mini-batch
 
-MLP model = {
-		2,
-		{DIM, DIM, CLASSES},
-		0.01,
-		RELU,
-		SOFTMAX
-};
+
+//CNN
+
+// online
+
+// mini-batch
+
+
+// Dataset
+double train_data[NUM_TRAINS][DIM];
+double test_data[NUM_TESTS][DIM];
+int train_label[NUM_TRAINS];
+int test_label[NUM_TESTS];
 
 
 void train_mlp() {
 
-	bool tk[CLASSES];
+	bool tk[NUM_CLASSES];
 	int train_order[NUM_TRAINS];
 
-	mlp_initialize(&model);
+	mlp_initialize(mlp_num_nodes, mlp_weight, mlp_bias, HIDDEN_ACTIVATION);
 
-	for (int ep = 0; ep < MLP_EPOCH_MAX; ++ep) {
+	printf("train MLP...\n\n");
+	for (int ep = 0; ep < EPOCH_MAX; ++ep) {
 		// shuffle dataset order
 		for (int i = 0; i < NUM_TRAINS; ++i) train_order[i] = i;
 		shuffle(train_order, NUM_TRAINS);
@@ -34,21 +51,42 @@ void train_mlp() {
 		// train
 		for (int t = 0; t < NUM_TRAINS; ++t) {
 			int i = train_order[t];
-			convert_one_hot(dataset.train_label[i], tk, CLASSES);
+			convert_one_hot(train_label[i], tk);
 
-			mlp_forward(&model, dataset.train_data[i], DIM);
-			mlp_backprop(&model, tk, CLASSES);
+			mlp_forward(
+				train_data[i], mlp_num_nodes, mlp_out, mlp_weight, mlp_bias,
+				HIDDEN_ACTIVATION, OUTPUT_ACTIVATION
+			);
+			mlp_backprop(
+				tk, mlp_num_nodes, mlp_out, mlp_delta, mlp_weight, mlp_bias,
+				HIDDEN_ACTIVATION, OUTPUT_ACTIVATION
+			);
 		}
 
-		// test
+		// evaluate test
 		int count = 0;
 		for (int t = 0; t < NUM_TESTS; ++t) {
 			int i = t;
-			mlp_forward(&model, dataset.test_data[i], DIM);
-			if (mlp_is_collect(&model, dataset.test_label[i])) ++count;
+			mlp_forward(
+				test_data[i], mlp_num_nodes, mlp_out, mlp_weight, mlp_bias,
+				HIDDEN_ACTIVATION, OUTPUT_ACTIVATION
+			);
+			if (mlp_is_collect(mlp_out[MLP_NUM_LAYERS - 1], test_label[i])) ++count;
 		}
-		printf("Epoch: %d, %.3f\n", ep, (double)count / NUM_TESTS);
+		printf("Epoch %d: %.3f\n", ep, (double)count / NUM_TESTS);
 	}
+
+	// evaluate train
+	int count = 0;
+	for (int t = 0; t < NUM_TRAINS; ++t) {
+		int i = t;
+		mlp_forward(
+			train_data[i], mlp_num_nodes, mlp_out, mlp_weight, mlp_bias,
+			HIDDEN_ACTIVATION, OUTPUT_ACTIVATION
+		);
+		if (mlp_is_collect(mlp_out[MLP_NUM_LAYERS - 1], train_label[i])) ++count;
+	}
+	printf("Train: %.3f\n\n", (double)count / NUM_TRAINS);
 
 }
 
@@ -56,7 +94,9 @@ void train_mlp() {
 int main() {
 	
 	// データセット読み込み
-	load_dataset(&dataset);
+	load_dataset(train_data, test_data, train_label, test_label);
 
 	train_mlp();
+
+	return 0;
 }

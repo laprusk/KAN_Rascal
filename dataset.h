@@ -13,7 +13,7 @@
 #define WIDTH 8
 #define CHANNEL 1
 #define DIM (HEIGHT * WIDTH * CHANNEL)
-#define CLASSES 10
+#define NUM_CLASSES 10
 #define NUM_TRAINS 3823
 #define NUM_TESTS 1797
 static const double MAXV = 16.0;
@@ -22,7 +22,6 @@ static const char* test_file_name = "optdigits_tes.csv";
 
 #endif
 
-
 typedef struct {
 	double train_data[NUM_TRAINS][DIM];
 	double test_data[NUM_TESTS][DIM];
@@ -30,6 +29,13 @@ typedef struct {
 	int test_label[NUM_TESTS];
 } DataSet;
 
+void load_dataset(
+	double train_data[][DIM],
+	double test_data[][DIM],
+	int train_label[],
+	int test_label[]
+);
+void convert_one_hot(int label, bool* tk);
 
-void load_dataset(DataSet* dataset);
-void convert_one_hot(int label, bool* tk, int num_classes);
+//void load_dataset(DataSet* dataset);
+//void convert_one_hot(int label, bool* tk, int num_classes);

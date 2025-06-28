@@ -4,45 +4,52 @@
 #include <stdbool.h>
 
 
+// 定数の再定義
+const int NUM_LAYERS = MLP_NUM_LAYERS;
+
+
 /// <summary>
 /// MLPの重み初期化
 /// ReLUの場合はHe初期化を行い、それ以外では一様初期化を行う
 /// </summary>
 /// <param name="model">MLPモデル</param>
-void mlp_initialize(MLP* model) {
+void mlp_initialize(
+	int num_nodes[],
+	double weight[][MLP_MAX_NODES][MLP_MAX_NODES],
+	double bias[][MLP_MAX_NODES],
+	Activation hidden_activation
+) {
 	int l;
 
-	if (model->num_layers > MLP_MAX_LAYERS) return;
-
 	// hidden layer
-	for (l = 0; l < model->num_layers - 1; ++l) {
+	for (l = 0; l < NUM_LAYERS - 2; ++l) {
 		// ReLUならHe初期化
-		if (model->hidden_activation == RELU) {
-			double he_wp = 2 * sqrt(6.0 / model->num_nodes[l]);
-			for (int j = 0; j < model->num_nodes[l + 1]; ++j) {
-				model->bias[l][j] = 0;
-				for (int i = 0; i < model->num_nodes[l]; ++i) {
-					model->weight[l][j][i] = ((double)rand() / RAND_MAX - 0.5) * he_wp;
+		if (hidden_activation == RELU) {
+			double he_wp = 2 * sqrt(6.0 / num_nodes[l]);
+			for (int j = 0; j < num_nodes[l + 1]; ++j) {
+				bias[l][j] = 0;
+				for (int i = 0; i < num_nodes[l]; ++i) {
+					weight[l][j][i] = ((double)rand() / RAND_MAX - 0.5) * he_wp;
 					//woi[l][j][i] = randn() / sqrt(NodeN[l] / 2);
 				}
 			}
 		}
 		// ReLU以外なら一様初期化
 		else {
-			for (int j = 0; j < model->num_nodes[l + 1]; ++j) {
-				model->bias[l][j] = 0;
-				for (int i = 0; i < model->num_nodes[l]; ++i) {
-					model->weight[l][j][i] = (double)rand() / (RAND_MAX)-0.5;
+			for (int j = 0; j < num_nodes[l + 1]; ++j) {
+				bias[l][j] = 0;
+				for (int i = 0; i < num_nodes[l]; ++i) {
+					weight[l][j][i] = (double)rand() / (RAND_MAX)-0.5;
 				}
 			}
 		}
 	}
 
 	// output layer
-	for (int j = 0; j < model->num_nodes[l + 1]; ++j) {
-		model->bias[l][j] = 0;
-		for (int i = 0; i < model->num_nodes[l]; ++i) {
-			model->weight[l][j][i] = (double)rand() / (RAND_MAX)-0.5;
+	for (int j = 0; j < num_nodes[l + 1]; ++j) {
+		bias[l][j] = 0;
+		for (int i = 0; i < num_nodes[l]; ++i) {
+			weight[l][j][i] = (double)rand() / (RAND_MAX)-0.5;
 		}
 	}
 
@@ -55,47 +62,48 @@ void mlp_initialize(MLP* model) {
 /// <param name="model">MLPモデル</param>
 /// <param name="input">入力</param>
 /// <param name="dim_input">入力次元</param>
-void mlp_forward(MLP* model, double* input, int dim_input) {
+void mlp_forward(
+	double x[],
+	int num_nodes[],
+	double out[][MLP_MAX_NODES],
+	double weight[][MLP_MAX_NODES][MLP_MAX_NODES],
+	double bias[][MLP_MAX_NODES],
+	Activation hidden_activation,
+	Activation output_activation
+) {
 	int l;
 
-	if (model->num_layers > MLP_MAX_LAYERS) return;
-
-	// model->が冗長なため一度ローカルで再定義
-	double (*weight)[MLP_MAX_NODES][MLP_MAX_NODES] = model->weight;
-	double (*bias)[MLP_MAX_NODES] = model->bias;
-	double (*out)[MLP_MAX_NODES] = model->out;
-
 	// 入力を0層の出力へコピー
-	for (int i = 0; i < dim_input; ++i) {
-		out[0][i] = input[i];
+	for (int i = 0; i < DIM; ++i) {
+		out[0][i] = x[i];
 	}
 
 	// hidden layer
-	for (l = 0; l < model->num_layers - 1; ++l) {
-		for (int j = 0; j < model->num_nodes[l + 1]; ++j) {
-			out[l + 1][j] = bias[l][j];
-			for (int i = 0; i < model->num_nodes[l]; ++i) {
-				out[l + 1][j] += weight[l][j][i] * out[l][i];
+	for (l = 1; l < NUM_LAYERS - 1; ++l) {
+		for (int j = 0; j < num_nodes[l]; ++j) {
+			out[l][j] = bias[l - 1][j];
+			for (int i = 0; i < num_nodes[l - 1]; ++i) {
+				out[l][j] += weight[l - 1][j][i] * out[l - 1][i];
 			}
 
-			if (model->hidden_activation == RELU) out[l + 1][j] = relu(out[l + 1][j]);
-			else if (model->hidden_activation == SIGMOID) out[l + 1][j] = sigmoid(out[l + 1][j]);
+			if (hidden_activation == RELU) out[l][j] = relu(out[l][j]);
+			else if (hidden_activation == SIGMOID) out[l][j] = sigmoid(out[l][j]);
 		}
 	}
 
 	// output layer
-	for (int j = 0; j < model->num_nodes[l + 1]; ++j) {
-		out[l + 1][j] = bias[l][j];
-		for (int i = 0; i < model->num_nodes[l]; ++i) {
-			out[l + 1][j] += weight[l][j][i] * out[l][i];
+	for (int j = 0; j < num_nodes[l]; ++j) {
+		out[l][j] = bias[l - 1][j];
+		for (int i = 0; i < num_nodes[l - 1]; ++i) {
+			out[l][j] += weight[l - 1][j][i] * out[l - 1][i];
 		}
 	}
-	if (model->out_activation == SOFTMAX) {
-		softmax(out[l + 1], model->num_nodes[l + 1]);
+	if (output_activation == SOFTMAX) {
+		softmax(out[l], num_nodes[l]);
 	}
-	else if (model->out_activation == SIGMOID) {
-		for (int j = 0; j < model->num_nodes[l + 1]; ++j) {
-			out[l + 1][j] = sigmoid(out[l + 1][j]);
+	else if (output_activation == SIGMOID) {
+		for (int j = 0; j < num_nodes[l]; ++j) {
+			out[l][j] = sigmoid(out[l][j]);
 		}
 	}
 
@@ -108,52 +116,53 @@ void mlp_forward(MLP* model, double* input, int dim_input) {
 /// <param name="model">MLPモデル</param>
 /// <param name="tk">教師データ</param>
 /// <param name="num_classes">クラス数</param>
-void mlp_backprop(MLP* model, bool* tk, int num_classes) {
+void mlp_backprop(
+	bool t[],
+	int num_nodes[],
+	double out[][MLP_MAX_NODES],
+	double delta[][MLP_MAX_NODES],
+	double weight[][MLP_MAX_NODES][MLP_MAX_NODES],
+	double bias[][MLP_MAX_NODES],
+	Activation hidden_activation,
+	Activation output_activation
+) {
 
 	int l;
 
-	if (model->num_layers > MLP_MAX_LAYERS) return;
-
-	// model->が冗長なため一度ローカルで再定義
-	double (*weight)[MLP_MAX_NODES][MLP_MAX_NODES] = model->weight;
-	double (*bias)[MLP_MAX_NODES] = model->bias;
-	double (*out)[MLP_MAX_NODES] = model->out;
-	double (*delta)[MLP_MAX_NODES] = model->delta;
-
 	// output layer
-	l = model->num_layers;
+	l = NUM_LAYERS - 1;
 	// Softmax with cross entropy error
-	if (model->out_activation == SOFTMAX) {
-		for (int i = 0; i < num_classes; ++i) {
-			delta[l][i] = out[l][i] - (double)tk[i];
+	if (output_activation == SOFTMAX) {
+		for (int i = 0; i < NUM_CLASSES; ++i) {
+			delta[l][i] = out[l][i] - (double)t[i];
 		}
 	}
 	// Sigmoid with squared error
-	else if (model->out_activation == SIGMOID) {
-		for (int i = 0; i < num_classes; ++i) {
-			delta[l][i] = (out[l][i] - (double)tk[i]) * (1 - out[l][i]) * out[l][i];
+	else if (output_activation == SIGMOID) {
+		for (int i = 0; i < NUM_CLASSES; ++i) {
+			delta[l][i] = (out[l][i] - (double)t[i]) * (1 - out[l][i]) * out[l][i];
 		}
 	}
 
 	// hidden layer
-	for (l = model->num_layers - 1; l > 0; --l) {
-		for (int i = 0; i < model->num_nodes[l]; ++i) {
+	for (l = NUM_LAYERS - 2; l > 0; --l) {
+		for (int i = 0; i < num_nodes[l]; ++i) {
 			delta[l][i] = 0;
 			if (out[l][i] != 0) {			// 出力が0なら、活性化関数によらず誤差信号も0
-				for (int j = 0; j < model->num_nodes[l + 1]; ++j)
+				for (int j = 0; j < num_nodes[l + 1]; ++j)
 					delta[l][i] += delta[l + 1][j] * weight[l][j][i];
 
-				if (model->hidden_activation == SIGMOID) delta[l][i] *= (1 - out[l][i]) * out[l][i];
+				if (hidden_activation == SIGMOID) delta[l][i] *= (1 - out[l][i]) * out[l][i];
 			}
 		}
 	}
 
 	// 重み・バイアスの更新
-	for (l = 0; l < model->num_layers; ++l) {
-		for (int j = 0; j < model->num_nodes[l + 1]; ++j) {
-			bias[l][j] -= model->learning_rate * delta[l + 1][j];
-			for (int i = 0; i < model->num_nodes[l]; ++i) {
-				weight[l][j][i] -= model->learning_rate * delta[l + 1][j] * out[l][i];
+	for (l = 0; l < NUM_LAYERS; ++l) {
+		for (int j = 0; j < num_nodes[l + 1]; ++j) {
+			bias[l][j] -= LR * delta[l + 1][j];
+			for (int i = 0; i < num_nodes[l]; ++i) {
+				weight[l][j][i] -= LR * delta[l + 1][j] * out[l][i];
 			}
 		}
 	}
@@ -167,14 +176,11 @@ void mlp_backprop(MLP* model, bool* tk, int num_classes) {
 /// <param name="model">MLPモデル</param>
 /// <param name="label">教師ラベル</param>
 /// <returns>推論結果が正しければtrue、間違えていればfalse</returns>
-bool mlp_is_collect(MLP* model, int label) {
-
-	const int last_layer = model->num_layers;
-	const int last_nodes = model->num_nodes[last_layer];
+bool mlp_is_collect(double output[], int label) {
 
 	int maxi = 0;
-	for (int i = 1; i < last_nodes; ++i) {
-		if (model->out[last_layer][i] > model->out[last_layer][maxi]) maxi = i;
+	for (int i = 1; i < NUM_CLASSES; ++i) {
+		if (output[i] > output[maxi]) maxi = i;
 	}
 
 	return maxi == label;
