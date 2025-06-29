@@ -13,10 +13,10 @@ const int NUM_LAYERS = MLP_NUM_LAYERS;
 /// ReLUの場合はHe初期化を行い、それ以外では一様初期化を行う
 /// </summary>
 /// <param name="model">MLPモデル</param>
-void mlp_initialize(
-	int num_nodes[],
-	double weight[][MLP_MAX_NODES][MLP_MAX_NODES],
-	double bias[][MLP_MAX_NODES],
+void mlp_init(
+	int num_nodes[MLP_NUM_LAYERS],
+	double weight[MLP_NUM_LAYERS - 1][MLP_MAX_NODES][MLP_MAX_NODES],
+	double bias[MLP_NUM_LAYERS - 1][MLP_MAX_NODES],
 	Activation hidden_activation
 ) {
 	int l;
@@ -63,11 +63,11 @@ void mlp_initialize(
 /// <param name="input">入力</param>
 /// <param name="dim_input">入力次元</param>
 void mlp_forward(
-	double x[],
-	int num_nodes[],
-	double out[][MLP_MAX_NODES],
-	double weight[][MLP_MAX_NODES][MLP_MAX_NODES],
-	double bias[][MLP_MAX_NODES],
+	double x[DIM],
+	int num_nodes[MLP_NUM_LAYERS],
+	double weight[MLP_NUM_LAYERS - 1][MLP_MAX_NODES][MLP_MAX_NODES],
+	double bias[MLP_NUM_LAYERS - 1][MLP_MAX_NODES],
+	double out[MLP_NUM_LAYERS][MLP_MAX_NODES],
 	Activation hidden_activation,
 	Activation output_activation
 ) {
@@ -117,14 +117,15 @@ void mlp_forward(
 /// <param name="tk">教師データ</param>
 /// <param name="num_classes">クラス数</param>
 void mlp_backprop(
-	bool t[],
-	int num_nodes[],
-	double out[][MLP_MAX_NODES],
-	double delta[][MLP_MAX_NODES],
-	double weight[][MLP_MAX_NODES][MLP_MAX_NODES],
-	double bias[][MLP_MAX_NODES],
+	bool t[NUM_CLASSES],
+	int num_nodes[MLP_NUM_LAYERS],
+	double weight[MLP_NUM_LAYERS - 1][MLP_MAX_NODES][MLP_MAX_NODES],
+	double bias[MLP_NUM_LAYERS - 1][MLP_MAX_NODES],
+	double out[MLP_NUM_LAYERS][MLP_MAX_NODES],
+	double delta[MLP_NUM_LAYERS][MLP_MAX_NODES],
 	Activation hidden_activation,
-	Activation output_activation
+	Activation output_activation,
+	bool is_delta_0layer
 ) {
 
 	int l;
@@ -156,9 +157,20 @@ void mlp_backprop(
 			}
 		}
 	}
+	if (is_delta_0layer) {
+		for (int i = 0; i < num_nodes[l]; ++i) {
+			delta[l][i] = 0;
+			if (out[l][i] != 0) {			// 出力が0なら、活性化関数によらず誤差信号も0
+				for (int j = 0; j < num_nodes[l + 1]; ++j)
+					delta[l][i] += delta[l + 1][j] * weight[l][j][i];
+
+				if (hidden_activation == SIGMOID) delta[l][i] *= (1 - out[l][i]) * out[l][i];
+			}
+		}
+	}
 
 	// 重み・バイアスの更新
-	for (l = 0; l < NUM_LAYERS; ++l) {
+	for (l = 0; l < NUM_LAYERS - 1; ++l) {
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			bias[l][j] -= LR * delta[l + 1][j];
 			for (int i = 0; i < num_nodes[l]; ++i) {
