@@ -1,5 +1,6 @@
 #include "mlp.h"
 #include "cnn.h"
+#include "kan.h"
 #include "dataset.h"
 #include "util.h"
 #include <stdio.h>
@@ -16,9 +17,9 @@ const bool CNN = 1;
 int mlp_num_nodes[MLP_NUM_LAYERS] = {MLP_INPUT_DIM, DIM, NUM_CLASSES};
 const Activation HIDDEN_ACTIVATION = RELU;
 const Activation OUTPUT_ACTIVATION = SOFTMAX;
-// online
 double mlp_weight[MLP_NUM_LAYERS - 1][MLP_MAX_NODES][MLP_MAX_NODES];
 double mlp_bias[MLP_NUM_LAYERS - 1][MLP_MAX_NODES];
+// online
 double mlp_out[MLP_NUM_LAYERS][MLP_MAX_NODES];
 double mlp_delta[MLP_NUM_LAYERS][MLP_MAX_NODES];
 // mini-batch
@@ -37,6 +38,17 @@ double cnn_delta[NUM_SEGMENTS][COUNT_CONV + 1][MAX_CH][HEIGHT][WIDTH];
 double cnn_dweight[NUM_SEGMENTS][COUNT_CONV][MAX_CH][MAX_CH][KERNEL_SIZE][KERNEL_SIZE];
 double cnn_dbias[NUM_SEGMENTS][COUNT_CONV][MAX_CH];
 // mini-batch
+
+
+// KAN
+int kan_num_nodes[KAN_NUM_LAYERS] = { KAN_INPUT_DIM, 20, NUM_CLASSES };
+double knots[NUM_KNOTS];
+double coeff[KAN_NUM_LAYERS][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP];
+double wb[KAN_NUM_LAYERS][KAN_MAX_NODES][KAN_MAX_NODES];
+double ws[KAN_NUM_LAYERS][KAN_MAX_NODES][KAN_MAX_NODES];
+// online
+double kan_out[KAN_NUM_LAYERS][KAN_MAX_NODES];
+double kan_delta[KAN_NUM_LAYERS][KAN_MAX_NODES];
 
 
 // Dataset
