@@ -22,7 +22,7 @@ double de_boor_cox(double x, int i, int order, double knots[NUM_KNOTS]) {
 double bspline(double x, double coeff[NUM_CP], double knots[NUM_KNOTS]) {
 	double sum = 0;
 
-	for (int i = 0; i < NUM_CP; ++i) {
+for (int i = 0; i < NUM_CP; ++i) {
 		sum += coeff[i] * de_boor_cox(x, i, SPLINE_ORDER, knots);
 	}
 }
