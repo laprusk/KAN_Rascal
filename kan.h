@@ -1,5 +1,7 @@
 #pragma once
 
+#include "dataset.h"
+
 #define KAN_NUM_LAYERS 3
 #define KAN_INPUT_DIM DIM
 #define KAN_MAX_NODES DIM

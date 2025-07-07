@@ -8,4 +8,5 @@ typedef enum {
 
 double sigmoid(double x);
 double relu(double x);
+double silu(double x);
 void softmax(double* x, int n);

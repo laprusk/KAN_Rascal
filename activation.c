@@ -12,6 +12,10 @@ double relu(double x) {
 	else return x;
 }
 
+double silu(double x) {
+	return x / (1 + exp(-x));
+}
+
 void softmax(double* x, int n) {
 
 	// Å‘å’l
