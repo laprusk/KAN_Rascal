@@ -22,7 +22,7 @@ double de_boor_cox(double x, int i, int order, double knots[NUM_KNOTS]) {
 double bspline(double x, double coeff[NUM_CP], double knots[NUM_KNOTS]) {
 	double sum = 0;
 
-for (int i = 0; i < NUM_CP; ++i) {
+	for (int i = 0; i < NUM_CP; ++i) {
 		sum += coeff[i] * de_boor_cox(x, i, SPLINE_ORDER, knots);
 	}
 }
@@ -43,6 +43,7 @@ void kan_forward(
 		out[0][i] = x[i];
 	}
 
+	// 各エッジのBスプラインに通した結果を、各ノードで和を取っていく
 	for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			out[l + 1][j] = 0;
@@ -53,5 +54,9 @@ void kan_forward(
 			}
 		}
 	}
+
+	// softmax
+	const int last_layer = KAN_NUM_LAYERS - 1;
+	softmax(out[last_layer], num_nodes[last_layer]);
 
 }
