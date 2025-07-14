@@ -152,9 +152,9 @@ void kan_backprop(
 			for (int j = 0; j < num_nodes[l + 1]; ++j) {
 				double const sig_out = sigmoid(out[l][i]);
 				double const dsilu = sig_out * out[l][i] * sig_out * (1 - sig_out);
-				double const dspline = bspline_derive(out[l][i], coeff, knots);
+				double const dspline = bspline_derive(out[l][i], coeff[l][j][i], knots);
 
-				delta[l][i] += wb[l][j][i] * dsilu + ws[l][j][i] * dspline;
+				delta[l][i] += (wb[l][j][i] * dsilu + ws[l][j][i] * dspline) * delta[l + 1][j];
 			}
 		}
 	}
