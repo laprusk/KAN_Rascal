@@ -93,7 +93,6 @@ void kan_forward(
 		out[0][i] = x[i];
 	}
 
-	// 各エッジのBスプラインに通した結果を、各ノードで和を取っていく
 	for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			out[l + 1][j] = 0;
@@ -104,10 +103,6 @@ void kan_forward(
 			}
 		}
 	}
-
-	// softmax
-	const int last_layer = KAN_NUM_LAYERS - 1;
-	softmax(out[last_layer], num_nodes[last_layer]);
 
 }
 
