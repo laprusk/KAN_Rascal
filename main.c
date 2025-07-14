@@ -10,7 +10,7 @@
 
 // ’è”
 const int EPOCH_MAX = 10;
-const bool CNN = 1;
+const bool CNN = 0;
 
 
 // MLP
