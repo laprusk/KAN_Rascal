@@ -49,6 +49,9 @@ double ws[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES];
 // online
 double kan_out[KAN_NUM_LAYERS][KAN_MAX_NODES];
 double kan_delta[KAN_NUM_LAYERS][KAN_MAX_NODES];
+double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES];
+double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES];
+double basis_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP];
 
 
 // Dataset
@@ -134,7 +137,7 @@ void train_mlp() {
 
 }
 
-train_kan() {
+void train_kan() {
 
 	double x[DIM];
 	bool tk[NUM_CLASSES];
@@ -159,8 +162,8 @@ train_kan() {
 			convert_one_hot(train_label[i], tk);
 
 			// forward & backprop
-			kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, kan_out);
-			kan_backprop(tk, kan_num_nodes, wb, ws, coeff, knots, kan_out, kan_delta);
+			kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, kan_out, silu_out, spline_out, basis_out);
+			kan_backprop(tk, kan_num_nodes, wb, ws, coeff, knots, kan_out, kan_delta, silu_out, spline_out, basis_out);
 		}
 
 		// evaluate test
@@ -170,7 +173,7 @@ train_kan() {
 			memcpy(x, test_data[i], sizeof(test_data[i]));
 
 			// forward only
-			kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, kan_out);
+			kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, kan_out, silu_out, spline_out, basis_out);
 			if (mlp_is_collect(kan_out[KAN_NUM_LAYERS - 1], test_label[i])) ++count;
 		}
 		printf("Epoch %d: %.3f\n", ep, (double)count / NUM_TESTS);
@@ -183,8 +186,8 @@ train_kan() {
 		memcpy(x, train_data[i], sizeof(train_data[i]));
 
 		// forward only
-		kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, kan_out);
-		if (mlp_is_collect(kan_out[KAN_NUM_LAYERS - 1], test_label[i])) ++count;
+		kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, kan_out, silu_out, spline_out, basis_out);
+		if (mlp_is_collect(kan_out[KAN_NUM_LAYERS - 1], train_label[i])) ++count;
 	}
 	printf("Train: %.3f\n\n", (double)count / NUM_TRAINS);
 

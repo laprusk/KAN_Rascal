@@ -56,7 +56,7 @@ void kan_init(
 double de_boor_cox(double x, int i, int order, double knots[NUM_KNOTS]) {
 
 	if (order == 0) {
-		if (knots[i] <= x <= knots[i + 1]) return 1;
+		if (knots[i] <= x && x <= knots[i + 1]) return 1;
 		else return 0;
 	}
 
@@ -69,11 +69,12 @@ double de_boor_cox(double x, int i, int order, double knots[NUM_KNOTS]) {
 
 
 // Bスプライン曲線
-double bspline(double x, double coeff[NUM_CP], double knots[NUM_KNOTS]) {
+double bspline(double x, double coeff[NUM_CP], double knots[NUM_KNOTS], double basis_out[NUM_CP]) {
 	double sum = 0;
 
 	for (int i = 0; i < NUM_CP; ++i) {
-		sum += coeff[i] * de_boor_cox(x, i, SPLINE_ORDER, knots);
+		basis_out[i] = de_boor_cox(x, i, SPLINE_ORDER, knots);
+		sum += coeff[i] * basis_out[i];
 	}
 
 	return sum;
@@ -87,7 +88,10 @@ void kan_forward(
 	double ws[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP],
 	double knots[NUM_KNOTS],
-	double out[KAN_NUM_LAYERS][KAN_MAX_NODES]
+	double out[KAN_NUM_LAYERS][KAN_MAX_NODES],
+	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],
+	double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
+	double basis_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP]
 ) {
 
 	// 入力を0層の出力へコピー
@@ -96,15 +100,20 @@ void kan_forward(
 	}
 
 	for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
+		for (int i = 0; i < num_nodes[l]; ++i) {
+			silu_out[l][i] = silu(out[l][i]);
+		}
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			out[l + 1][j] = 0;
 			for (int i = 0; i < num_nodes[l]; ++i) {
-				out[l + 1][j] +=
-					wb[l][j][i] * silu(out[l][i]) +
-					ws[l][j][i] * bspline(out[l][i], coeff[l][j][i], knots);
+				spline_out[l][j][i] = bspline(out[l][i], coeff[l][j][i], knots, basis_out[l][i]);
+
+				out[l + 1][j] += wb[l][j][i] * silu_out[l][i] + ws[l][j][i] * spline_out[l][j][i];
 			}
 		}
 	}
+
+	softmax(out[KAN_NUM_LAYERS - 1], num_nodes[KAN_NUM_LAYERS - 1]);
 
 }
 
@@ -120,11 +129,11 @@ double de_boor_cox_derive(double x, int i, int order, double knots[NUM_KNOTS]) {
 
 
 // Bスプライン曲線の微分
-double bspline_derive(double x, double coeff[NUM_CP], double knots[NUM_KNOTS]) {
+double bspline_derive(double x, double coeff[NUM_CP], double knots[NUM_KNOTS], double basis_out[NUM_CP]) {
 	double sum = 0;
 
 	for (int i = 0; i < NUM_CP; ++i) {
-		sum += coeff[i] * de_boor_cox_derive(x, i, SPLINE_ORDER, knots);
+		sum += coeff[i] * basis_out[i];
 	}
 }
 
@@ -137,7 +146,10 @@ void kan_backprop(
 	double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP],
 	double knots[NUM_KNOTS],
 	double out[KAN_NUM_LAYERS][KAN_MAX_NODES],
-	double delta[KAN_NUM_LAYERS][KAN_MAX_NODES]
+	double delta[KAN_NUM_LAYERS][KAN_MAX_NODES],
+	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],
+	double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
+	double basis_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP]
 ) {
 
 	const int last_layer = KAN_NUM_LAYERS - 1;
@@ -153,8 +165,10 @@ void kan_backprop(
 			delta[l][i] = 0;
 			for (int j = 0; j < num_nodes[l + 1]; ++j) {
 				double const sig_out = sigmoid(out[l][i]);
-				double const dsilu = sig_out * out[l][i] * sig_out * (1 - sig_out);
-				double const dspline = bspline_derive(out[l][i], coeff[l][j][i], knots);
+				//double const dsilu = sig_out * out[l][i] * sig_out * (1 - sig_out);
+				//double const dspline = bspline_derive(out[l][i], coeff[l][j][i], knots);
+				double const dsilu = 1;
+				double const dspline = 1;
 
 				delta[l][i] += (wb[l][j][i] * dsilu + ws[l][j][i] * dspline) * delta[l + 1][j];
 			}
@@ -165,8 +179,8 @@ void kan_backprop(
 	for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			for (int i = 0; i < num_nodes[l]; ++i) {
-				wb[l][j][i] -= KAN_LR * (delta[l + 1][j] * silu(out[l][i]));
-				ws[l][j][i] -= KAN_LR * (delta[l + 1][j] * bspline(out[l][i], coeff[l][j][i], knots));
+				wb[l][j][i] -= KAN_LR * (delta[l + 1][j] * silu_out[l][i]);
+				ws[l][j][i] -= KAN_LR * (delta[l + 1][j] * spline_out[l][j][i]);
 			}
 		}
 	}
@@ -176,7 +190,7 @@ void kan_backprop(
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			for (int i = 0; i < num_nodes[l]; ++i) {
 				for (int c = 0; c < NUM_CP; ++c) {
-					coeff[l][j][i][c] -= KAN_LR * (ws[l][j][i] * de_boor_cox(out[l][i], c, SPLINE_ORDER, knots));
+					coeff[l][j][i][c] -= KAN_LR * (delta[l + 1][j] * ws[l][j][i] * basis_out[l][i][c]);
 				}
 			}
 		}

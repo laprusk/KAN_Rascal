@@ -26,7 +26,10 @@ void kan_forward(
 	double ws[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP],
 	double knots[NUM_KNOTS],
-	double out[KAN_NUM_LAYERS][KAN_MAX_NODES]
+	double out[KAN_NUM_LAYERS][KAN_MAX_NODES],
+	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],
+	double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
+	double basis_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP]
 );
 void kan_backprop(
 	bool t[NUM_CLASSES],
@@ -36,5 +39,8 @@ void kan_backprop(
 	double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP],
 	double knots[NUM_KNOTS],
 	double out[KAN_NUM_LAYERS][KAN_MAX_NODES],
-	double delta[KAN_NUM_LAYERS][KAN_MAX_NODES]
+	double delta[KAN_NUM_LAYERS][KAN_MAX_NODES],
+	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],
+	double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
+	double basis_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP]
 );
