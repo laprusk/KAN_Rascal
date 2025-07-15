@@ -41,7 +41,7 @@ double cnn_dbias[NUM_SEGMENTS][COUNT_CONV][MAX_CH];
 
 
 // KAN
-int kan_num_nodes[KAN_NUM_LAYERS] = { KAN_INPUT_DIM, 20, NUM_CLASSES };
+int kan_num_nodes[KAN_NUM_LAYERS] = { KAN_INPUT_DIM, 16, NUM_CLASSES };
 double knots[NUM_KNOTS];
 double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP];
 double wb[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES];
@@ -134,13 +134,70 @@ void train_mlp() {
 
 }
 
+train_kan() {
+
+	double x[DIM];
+	bool tk[NUM_CLASSES];
+	int train_order[NUM_TRAINS];
+
+	printf("train KAN...\n\n");
+
+	// init weight
+	kan_init(kan_num_nodes, wb, ws, coeff, knots);
+
+	// train loop
+	for (int ep = 0; ep < EPOCH_MAX; ++ep) {
+		// shuffle dataset order
+		for (int i = 0; i < NUM_TRAINS; ++i) train_order[i] = i;
+		shuffle(train_order, NUM_TRAINS);
+
+		// train
+		for (int t = 0; t < NUM_TRAINS; ++t) {
+			// make input & label
+			int i = train_order[t];
+			memcpy(x, train_data[i], sizeof(train_data[i]));
+			convert_one_hot(train_label[i], tk);
+
+			// forward & backprop
+			kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, kan_out);
+			kan_backprop(tk, kan_num_nodes, wb, ws, coeff, knots, kan_out, kan_delta);
+		}
+
+		// evaluate test
+		int count = 0;
+		for (int t = 0; t < NUM_TESTS; ++t) {
+			int i = t;
+			memcpy(x, test_data[i], sizeof(test_data[i]));
+
+			// forward only
+			kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, kan_out);
+			if (mlp_is_collect(kan_out[KAN_NUM_LAYERS - 1], test_label[i])) ++count;
+		}
+		printf("Epoch %d: %.3f\n", ep, (double)count / NUM_TESTS);
+	}
+
+	// evaluate train
+	int count = 0;
+	for (int t = 0; t < NUM_TRAINS; ++t) {
+		int i = t;
+		memcpy(x, train_data[i], sizeof(train_data[i]));
+
+		// forward only
+		kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, kan_out);
+		if (mlp_is_collect(kan_out[KAN_NUM_LAYERS - 1], test_label[i])) ++count;
+	}
+	printf("Train: %.3f\n\n", (double)count / NUM_TRAINS);
+
+}
+
 
 int main() {
 	
 	// データセット読み込み
 	load_dataset(train_data, test_data, train_label, test_label);
 
-	train_mlp();
+	//train_mlp();
+	train_kan();
 
 	return 0;
 }

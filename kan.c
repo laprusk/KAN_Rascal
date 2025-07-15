@@ -18,7 +18,7 @@ void kan_init(
 	for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			for (int i = 0; i < num_nodes[l]; ++i) {
-				wb[l][j][i] = sqrt(6 / (num_nodes[l] + num_nodes[l + 1])) * ((rand() / RAND_MAX) * 2 - 1);
+				wb[l][j][i] = sqrt(6.0 / (num_nodes[l] + num_nodes[l + 1])) * (((double)rand() / RAND_MAX) * 2 - 1);
 			}
 		}
 	}
@@ -75,6 +75,8 @@ double bspline(double x, double coeff[NUM_CP], double knots[NUM_KNOTS]) {
 	for (int i = 0; i < NUM_CP; ++i) {
 		sum += coeff[i] * de_boor_cox(x, i, SPLINE_ORDER, knots);
 	}
+
+	return sum;
 }
 
 
