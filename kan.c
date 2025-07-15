@@ -163,7 +163,8 @@ void kan_backprop(
 	for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			for (int i = 0; i < num_nodes[l]; ++i) {
-				
+				wb[l][j][i] -= KAN_LR * (delta[l + 1][j] * silu(out[l][i]));
+				ws[l][j][i] -= KAN_LR * (delta[l + 1][j] * bspline(out[l][i], coeff[l][j][i], knots));
 			}
 		}
 	}
@@ -173,7 +174,7 @@ void kan_backprop(
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			for (int i = 0; i < num_nodes[l]; ++i) {
 				for (int c = 0; c < NUM_CP; ++c) {
-
+					coeff[l][j][i][c] -= KAN_LR * (ws[l][j][i] * de_boor_cox(out[l][i], c, SPLINE_ORDER, knots));
 				}
 			}
 		}

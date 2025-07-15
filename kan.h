@@ -10,7 +10,7 @@
 #define SPLINE_ORDER 3
 #define NUM_CP (GRID_SIZE + SPLINE_ORDER)
 #define NUM_KNOTS (GRID_SIZE + 1 + SPLINE_ORDER * 2)
-#define KAN_LR
+#define KAN_LR 0.01
 
 void kan_init(
 	int num_nodes[KAN_NUM_LAYERS],
