@@ -7,7 +7,7 @@
 #define MLP_NUM_LAYERS 3
 #define MLP_INPUT_DIM DIM
 #define MLP_MAX_NODES DIM
-#define LR 0.01
+#define MLP_LR 0.01
 
 void mlp_init(
 	int num_nodes[MLP_NUM_LAYERS],

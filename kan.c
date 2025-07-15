@@ -8,14 +8,14 @@
 
 void kan_init(
 	int num_nodes[KAN_NUM_LAYERS],
-	double wb[KAN_NUM_LAYERS][KAN_MAX_NODES][KAN_MAX_NODES],
-	double ws[KAN_NUM_LAYERS][KAN_MAX_NODES][KAN_MAX_NODES],
-	double coeff[KAN_NUM_LAYERS][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP],
+	double wb[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
+	double ws[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
+	double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP],
 	double knots[NUM_KNOTS]
 ) {
 
 	// wbÇÕXavierèâä˙âª
-	for (int l = 0; l < KAN_NUM_LAYERS; ++l) {
+	for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			for (int i = 0; i < num_nodes[l]; ++i) {
 				wb[l][j][i] = sqrt(6 / (num_nodes[l] + num_nodes[l + 1])) * ((rand() / RAND_MAX) * 2 - 1);
@@ -24,7 +24,7 @@ void kan_init(
 	}
 
 	// wsÇÕ1Ç≈èâä˙âª
-	for (int l = 0; l < KAN_NUM_LAYERS; ++l) {
+	for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			for (int i = 0; i < num_nodes[l]; ++i) {
 				ws[l][j][i] = 1;
@@ -33,7 +33,7 @@ void kan_init(
 	}
 
 	// coeffÇÕN(0, 0.01)
-	for (int l = 0; l < KAN_NUM_LAYERS; ++l) {
+	for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			for (int i = 0; i < num_nodes[l]; ++i) {
 				for (int c = 0; c < NUM_CP; ++c) {
@@ -81,9 +81,9 @@ double bspline(double x, double coeff[NUM_CP], double knots[NUM_KNOTS]) {
 void kan_forward(
 	double x[DIM],
 	int num_nodes[KAN_NUM_LAYERS],
-	double wb[KAN_NUM_LAYERS][KAN_MAX_NODES][KAN_MAX_NODES],
-	double ws[KAN_NUM_LAYERS][KAN_MAX_NODES][KAN_MAX_NODES],
-	double coeff[KAN_NUM_LAYERS][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP],
+	double wb[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
+	double ws[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
+	double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP],
 	double knots[NUM_KNOTS],
 	double out[KAN_NUM_LAYERS][KAN_MAX_NODES]
 ) {
@@ -130,9 +130,9 @@ double bspline_derive(double x, double coeff[NUM_CP], double knots[NUM_KNOTS]) {
 void kan_backprop(
 	bool t[NUM_CLASSES],
 	int num_nodes[KAN_NUM_LAYERS],
-	double wb[KAN_NUM_LAYERS][KAN_MAX_NODES][KAN_MAX_NODES],
-	double ws[KAN_NUM_LAYERS][KAN_MAX_NODES][KAN_MAX_NODES],
-	double coeff[KAN_NUM_LAYERS][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP],
+	double wb[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
+	double ws[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
+	double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP],
 	double knots[NUM_KNOTS],
 	double out[KAN_NUM_LAYERS][KAN_MAX_NODES],
 	double delta[KAN_NUM_LAYERS][KAN_MAX_NODES]
@@ -155,6 +155,26 @@ void kan_backprop(
 				double const dspline = bspline_derive(out[l][i], coeff, knots);
 
 				delta[l][i] += wb[l][j][i] * dsilu + ws[l][j][i] * dspline;
+			}
+		}
+	}
+
+	// update wb, ws
+	for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
+		for (int j = 0; j < num_nodes[l + 1]; ++j) {
+			for (int i = 0; i < num_nodes[l]; ++i) {
+				
+			}
+		}
+	}
+
+	// update spline coefficient
+	for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
+		for (int j = 0; j < num_nodes[l + 1]; ++j) {
+			for (int i = 0; i < num_nodes[l]; ++i) {
+				for (int c = 0; c < NUM_CP; ++c) {
+
+				}
 			}
 		}
 	}

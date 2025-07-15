@@ -172,9 +172,9 @@ void mlp_backprop(
 	// 重み・バイアスの更新
 	for (l = 0; l < NUM_LAYERS - 1; ++l) {
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
-			bias[l][j] -= LR * delta[l + 1][j];
+			bias[l][j] -= MLP_LR * delta[l + 1][j];
 			for (int i = 0; i < num_nodes[l]; ++i) {
-				weight[l][j][i] -= LR * delta[l + 1][j] * out[l][i];
+				weight[l][j][i] -= MLP_LR * delta[l + 1][j] * out[l][i];
 			}
 		}
 	}

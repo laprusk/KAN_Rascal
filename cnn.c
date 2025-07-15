@@ -259,10 +259,10 @@ void cnn_backprop(
 		for (int c = 0; c < COUNT_CONV; ++c) {
 			for (int j = 0; j < num_ch[s][c + 1]; ++j) {		// o—Ích
 				int div = hsize * wsize;
-				bias[s][c][j] -= LR * dbias[s][c][j] / div;
+				bias[s][c][j] -= MLP_LR * dbias[s][c][j] / div;
 				for (int i = 0; i < num_ch[s][c]; ++i) {			// “ü—Ích
 					for (int y = 0; y < KERNEL_SIZE; ++y) for (int x = 0; x < KERNEL_SIZE; ++x) {
-						weight[s][c][j][i][y][x] -= LR * dweight[s][c][j][i][y][x] / div;
+						weight[s][c][j][i][y][x] -= MLP_LR * dweight[s][c][j][i][y][x] / div;
 					}
 				}
 			}
