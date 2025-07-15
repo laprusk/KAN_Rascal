@@ -60,7 +60,7 @@ double de_boor_cox(double x, int i, int order, double knots[NUM_KNOTS]) {
 		else return 0;
 	}
 
-	double const res =
+	const double res =
 		(x - knots[i]) / (knots[i + order] - knots[i]) * de_boor_cox(x, i, order - 1, knots) +
 		(knots[i + order + 1] - x) / (knots[i + order + 1] - knots[i + 1]) * de_boor_cox(x, i + 1, order - 1, knots);
 
@@ -120,7 +120,7 @@ void kan_forward(
 
 // de Boor Cox‘Q‰»Ž®‚Ì”÷•ª
 double de_boor_cox_derive(double x, int i, int order, double knots[NUM_KNOTS]) {
-	double const res =
+	const double res =
 		order / (knots[i + order] - knots[i]) * de_boor_cox(x, i, order - 1, knots) -
 		order / (knots[i + order + 1] - knots[i + 1]) * de_boor_cox(x, i + 1, order - 1, knots);
 
@@ -135,6 +135,8 @@ double bspline_derive(double x, double coeff[NUM_CP], double knots[NUM_KNOTS], d
 	for (int i = 0; i < NUM_CP; ++i) {
 		sum += coeff[i] * basis_out[i];
 	}
+
+	return sum;
 }
 
 
@@ -164,11 +166,11 @@ void kan_backprop(
 		for (int i = 0; i < num_nodes[l]; ++i) {
 			delta[l][i] = 0;
 			for (int j = 0; j < num_nodes[l + 1]; ++j) {
-				double const sig_out = sigmoid(out[l][i]);
-				//double const dsilu = sig_out * out[l][i] * sig_out * (1 - sig_out);
-				//double const dspline = bspline_derive(out[l][i], coeff[l][j][i], knots);
-				double const dsilu = 1;
-				double const dspline = 1;
+				const double sig_out = sigmoid(out[l][i]);
+				const double dsilu = sig_out * out[l][i] * sig_out * (1 - sig_out);
+				const double dspline = bspline_derive(out[l][i], coeff[l][j][i], knots, basis_out[l][i]);
+				//double const dsilu = 1;
+				//double const dspline = 1;
 
 				delta[l][i] += (wb[l][j][i] * dsilu + ws[l][j][i] * dspline) * delta[l + 1][j];
 			}
