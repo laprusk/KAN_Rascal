@@ -14,7 +14,7 @@ const bool CNN = 0;
 
 
 // MLP
-int mlp_num_nodes[MLP_NUM_LAYERS] = {MLP_INPUT_DIM, 16, NUM_CLASSES};
+int mlp_num_nodes[MLP_NUM_LAYERS] = {MLP_INPUT_DIM, DIM, NUM_CLASSES};
 const Activation HIDDEN_ACTIVATION = RELU;
 const Activation OUTPUT_ACTIVATION = SOFTMAX;
 double mlp_weight[MLP_NUM_LAYERS - 1][MLP_MAX_NODES][MLP_MAX_NODES];
@@ -41,7 +41,7 @@ double cnn_dbias[NUM_SEGMENTS][COUNT_CONV][MAX_CH];
 
 
 // KAN
-int kan_num_nodes[KAN_NUM_LAYERS] = { KAN_INPUT_DIM, DIM, NUM_CLASSES };
+int kan_num_nodes[KAN_NUM_LAYERS] = { KAN_INPUT_DIM, 16, NUM_CLASSES };
 double knots[NUM_KNOTS];
 double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP];
 double wb[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES];
@@ -195,6 +195,10 @@ void train_kan() {
 
 
 int main() {
+
+	// 乱数初期化
+	//srand((unsigned int)time(NULL));
+	//srand(1);
 	
 	// データセット読み込み
 	load_dataset(train_data, test_data, train_label, test_label);

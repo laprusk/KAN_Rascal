@@ -16,9 +16,10 @@ void kan_init(
 
 	// wbはXavier初期化
 	for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
+		double xavier_weight = sqrt(6.0 / (num_nodes[l] + num_nodes[l + 1]));
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			for (int i = 0; i < num_nodes[l]; ++i) {
-				wb[l][j][i] = sqrt(6.0 / (num_nodes[l] + num_nodes[l + 1])) * (((double)rand() / RAND_MAX) * 2 - 1);
+				wb[l][j][i] = xavier_weight * (((double)rand() / RAND_MAX) * 2 - 1);
 			}
 		}
 	}
@@ -113,7 +114,9 @@ void kan_forward(
 		}
 	}
 
-	softmax(out[KAN_NUM_LAYERS - 1], num_nodes[KAN_NUM_LAYERS - 1]);
+	// 最終層でsoftmax
+	const int last_layer = KAN_NUM_LAYERS - 1;
+	softmax(out[last_layer], num_nodes[last_layer]);
 
 }
 
@@ -129,11 +132,11 @@ double de_boor_cox_derive(double x, int i, int order, double knots[NUM_KNOTS]) {
 
 
 // Bスプライン曲線の微分
-double bspline_derive(double x, double coeff[NUM_CP], double knots[NUM_KNOTS], double basis_out[NUM_CP]) {
+double bspline_derive(double x, double coeff[NUM_CP], double knots[NUM_KNOTS]) {
 	double sum = 0;
 
 	for (int i = 0; i < NUM_CP; ++i) {
-		sum += coeff[i] * basis_out[i];
+		sum += coeff[i] * de_boor_cox_derive(x, i, SPLINE_ORDER, knots);
 	}
 
 	return sum;
@@ -156,7 +159,7 @@ void kan_backprop(
 
 	const int last_layer = KAN_NUM_LAYERS - 1;
 
-	// output layer (squared err)
+	// output layer (squared err or cross-entropy err)
 	for (int i = 0; i < NUM_CLASSES; ++i) {
 		delta[last_layer][i] = out[last_layer][i] - (double)t[i];
 	}
@@ -165,12 +168,12 @@ void kan_backprop(
 	for (int l = KAN_NUM_LAYERS - 2; l > 0; --l) {
 		for (int i = 0; i < num_nodes[l]; ++i) {
 			delta[l][i] = 0;
+			const double sig_out = sigmoid(out[l][i]);
+			const double dsilu = sig_out * out[l][i] * sig_out * (1 - sig_out);
+			//const double dsilu = 1;
 			for (int j = 0; j < num_nodes[l + 1]; ++j) {
-				const double sig_out = sigmoid(out[l][i]);
-				const double dsilu = sig_out * out[l][i] * sig_out * (1 - sig_out);
-				const double dspline = bspline_derive(out[l][i], coeff[l][j][i], knots, basis_out[l][i]);
-				//double const dsilu = 1;
-				//double const dspline = 1;
+				const double dspline = bspline_derive(out[l][i], coeff[l][j][i], knots);
+				//const double dspline = 1;
 
 				delta[l][i] += (wb[l][j][i] * dsilu + ws[l][j][i] * dspline) * delta[l + 1][j];
 			}
@@ -183,6 +186,8 @@ void kan_backprop(
 			for (int i = 0; i < num_nodes[l]; ++i) {
 				wb[l][j][i] -= KAN_LR * (delta[l + 1][j] * silu_out[l][i]);
 				ws[l][j][i] -= KAN_LR * (delta[l + 1][j] * spline_out[l][j][i]);
+				//wb[l][j][i] -= KAN_LR * (delta[l + 1][j] * silu(out[l][i]));
+				//ws[l][j][i] -= KAN_LR * (delta[l + 1][j] * bspline(out[l][i], coeff[l][j][i], knots, basis_out[l][i]));
 			}
 		}
 	}
@@ -193,6 +198,7 @@ void kan_backprop(
 			for (int i = 0; i < num_nodes[l]; ++i) {
 				for (int c = 0; c < NUM_CP; ++c) {
 					coeff[l][j][i][c] -= KAN_LR * (delta[l + 1][j] * ws[l][j][i] * basis_out[l][i][c]);
+					//coeff[l][j][i][c] -= KAN_LR * (delta[l + 1][j] * ws[l][j][i] * de_boor_cox(out[l][i], c, SPLINE_ORDER, knots));
 				}
 			}
 		}
