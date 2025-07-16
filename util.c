@@ -16,8 +16,8 @@ void shuffle(int* arr, int n) {
 double randn(double mu, double sigma) {
 	double u1, u2;
 
-	u1 = (double)rand() / RAND_MAX;
-	u2 = (double)rand() / RAND_MAX;
+	u1 = (rand() + 1.0) / (RAND_MAX + 2.0);
+	u2 = (rand() + 1.0) / (RAND_MAX + 2.0);
 
 	return sqrt(-2 * log(u1)) * cos(2 * M_PI * u2) * sigma + mu;
 }
