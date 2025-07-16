@@ -2,6 +2,7 @@
 #include <math.h>
 #include <stdbool.h>
 #include "kan.h"
+#include "kan_function.h"
 #include "activation.h"
 #include "util.h"
 
@@ -20,6 +21,7 @@ void kan_init(
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			for (int i = 0; i < num_nodes[l]; ++i) {
 				wb[l][j][i] = xavier_weight * (((double)rand() / RAND_MAX) * 2 - 1);
+				//wb[l][j][i] = 0;
 			}
 		}
 	}
@@ -53,35 +55,6 @@ void kan_init(
 }
 
 
-// de Boor Cox漸化式
-double de_boor_cox(double x, int i, int order, double knots[NUM_KNOTS]) {
-
-	if (order == 0) {
-		if (knots[i] <= x && x <= knots[i + 1]) return 1;
-		else return 0;
-	}
-
-	const double res =
-		(x - knots[i]) / (knots[i + order] - knots[i]) * de_boor_cox(x, i, order - 1, knots) +
-		(knots[i + order + 1] - x) / (knots[i + order + 1] - knots[i + 1]) * de_boor_cox(x, i + 1, order - 1, knots);
-
-	return res;
-}
-
-
-// Bスプライン曲線
-double bspline(double x, double coeff[NUM_CP], double knots[NUM_KNOTS], double basis_out[NUM_CP]) {
-	double sum = 0;
-
-	for (int i = 0; i < NUM_CP; ++i) {
-		basis_out[i] = de_boor_cox(x, i, SPLINE_ORDER, knots);
-		sum += coeff[i] * basis_out[i];
-	}
-
-	return sum;
-}
-
-
 void kan_forward(
 	double x[DIM],
 	int num_nodes[KAN_NUM_LAYERS],
@@ -92,7 +65,8 @@ void kan_forward(
 	double out[KAN_NUM_LAYERS][KAN_MAX_NODES],
 	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],
 	double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
-	double basis_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP]
+	double basis_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP],
+	KANFunction func_type
 ) {
 
 	// 入力を0層の出力へコピー
@@ -107,7 +81,7 @@ void kan_forward(
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			out[l + 1][j] = 0;
 			for (int i = 0; i < num_nodes[l]; ++i) {
-				spline_out[l][j][i] = bspline(out[l][i], coeff[l][j][i], knots, basis_out[l][i]);
+				spline_out[l][j][i] = spline(out[l][i], coeff[l][j][i], knots, basis_out[l][i], func_type);
 
 				out[l + 1][j] += wb[l][j][i] * silu_out[l][i] + ws[l][j][i] * spline_out[l][j][i];
 			}
@@ -118,28 +92,6 @@ void kan_forward(
 	const int last_layer = KAN_NUM_LAYERS - 1;
 	softmax(out[last_layer], num_nodes[last_layer]);
 
-}
-
-
-// de Boor Cox漸化式の微分
-double de_boor_cox_derive(double x, int i, int order, double knots[NUM_KNOTS]) {
-	const double res =
-		order / (knots[i + order] - knots[i]) * de_boor_cox(x, i, order - 1, knots) -
-		order / (knots[i + order + 1] - knots[i + 1]) * de_boor_cox(x, i + 1, order - 1, knots);
-
-	return res;
-}
-
-
-// Bスプライン曲線の微分
-double bspline_derive(double x, double coeff[NUM_CP], double knots[NUM_KNOTS]) {
-	double sum = 0;
-
-	for (int i = 0; i < NUM_CP; ++i) {
-		sum += coeff[i] * de_boor_cox_derive(x, i, SPLINE_ORDER, knots);
-	}
-
-	return sum;
 }
 
 
@@ -154,7 +106,8 @@ void kan_backprop(
 	double delta[KAN_NUM_LAYERS][KAN_MAX_NODES],
 	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],
 	double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
-	double basis_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP]
+	double basis_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP],
+	KANFunction func_type
 ) {
 
 	const int last_layer = KAN_NUM_LAYERS - 1;
@@ -169,10 +122,10 @@ void kan_backprop(
 		for (int i = 0; i < num_nodes[l]; ++i) {
 			delta[l][i] = 0;
 			const double sig_out = sigmoid(out[l][i]);
-			const double dsilu = sig_out * out[l][i] * sig_out * (1 - sig_out);
+			const double dsilu = sig_out + out[l][i] * sig_out * (1 - sig_out);
 			//const double dsilu = 1;
 			for (int j = 0; j < num_nodes[l + 1]; ++j) {
-				const double dspline = bspline_derive(out[l][i], coeff[l][j][i], knots);
+				const double dspline = spline_derive(out[l][i], coeff[l][j][i], knots, basis_out[l][i], func_type);
 				//const double dspline = 1;
 
 				delta[l][i] += (wb[l][j][i] * dsilu + ws[l][j][i] * dspline) * delta[l + 1][j];

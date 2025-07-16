@@ -131,6 +131,7 @@
     <ClCompile Include="cnn.c" />
     <ClCompile Include="dataset.c" />
     <ClCompile Include="kan.c" />
+    <ClCompile Include="kan_fuction.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="mlp.c" />
     <ClCompile Include="util.c" />
@@ -140,6 +141,7 @@
     <ClInclude Include="cnn.h" />
     <ClInclude Include="dataset.h" />
     <ClInclude Include="kan.h" />
+    <ClInclude Include="kan_function.h" />
     <ClInclude Include="mlp.h" />
     <ClInclude Include="util.h" />
   </ItemGroup>

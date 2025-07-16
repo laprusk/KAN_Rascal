@@ -5,7 +5,7 @@
 #include "util.h"
 #include <stdio.h>
 #include <stdbool.h>
-#include <string.h>
+#include <time.h>
 
 
 // 定数
@@ -42,6 +42,7 @@ double cnn_dbias[NUM_SEGMENTS][COUNT_CONV][MAX_CH];
 
 // KAN
 int kan_num_nodes[KAN_NUM_LAYERS] = { KAN_INPUT_DIM, 16, NUM_CLASSES };
+const KANFunction func_type = GRBF;
 double knots[NUM_KNOTS];
 double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP];
 double wb[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES];
@@ -148,6 +149,9 @@ void train_kan() {
 	// init weight
 	kan_init(kan_num_nodes, wb, ws, coeff, knots);
 
+	// Timer Start
+	const clock_t start_clock = clock();
+
 	// train loop
 	for (int ep = 0; ep < EPOCH_MAX; ++ep) {
 		// shuffle dataset order
@@ -162,8 +166,8 @@ void train_kan() {
 			convert_one_hot(train_label[i], tk);
 
 			// forward & backprop
-			kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, kan_out, silu_out, spline_out, basis_out);
-			kan_backprop(tk, kan_num_nodes, wb, ws, coeff, knots, kan_out, kan_delta, silu_out, spline_out, basis_out);
+			kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, kan_out, silu_out, spline_out, basis_out, func_type);
+			kan_backprop(tk, kan_num_nodes, wb, ws, coeff, knots, kan_out, kan_delta, silu_out, spline_out, basis_out, func_type);
 		}
 
 		// evaluate test
@@ -173,10 +177,11 @@ void train_kan() {
 			memcpy(x, test_data[i], sizeof(test_data[i]));
 
 			// forward only
-			kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, kan_out, silu_out, spline_out, basis_out);
+			kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, kan_out, silu_out, spline_out, basis_out, func_type);
 			if (mlp_is_collect(kan_out[KAN_NUM_LAYERS - 1], test_label[i])) ++count;
 		}
-		printf("Epoch %d: %.3f\n", ep, (double)count / NUM_TESTS);
+		const double sec = (double)(clock() - start_clock) / CLOCKS_PER_SEC;
+		printf("Epoch %d: %.3f (%.3fs)\n", ep, (double)count / NUM_TESTS, sec);
 	}
 
 	// evaluate train
@@ -186,7 +191,7 @@ void train_kan() {
 		memcpy(x, train_data[i], sizeof(train_data[i]));
 
 		// forward only
-		kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, kan_out, silu_out, spline_out, basis_out);
+		kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, kan_out, silu_out, spline_out, basis_out, func_type);
 		if (mlp_is_collect(kan_out[KAN_NUM_LAYERS - 1], train_label[i])) ++count;
 	}
 	printf("Train: %.3f\n\n", (double)count / NUM_TRAINS);
@@ -198,7 +203,7 @@ int main() {
 
 	// 乱数初期化
 	//srand((unsigned int)time(NULL));
-	//srand(1);
+	//srand(3);
 	
 	// データセット読み込み
 	load_dataset(train_data, test_data, train_label, test_label);
