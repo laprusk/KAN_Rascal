@@ -133,18 +133,6 @@ void kan_backprop(
 		}
 	}
 
-	// update wb, ws
-	for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
-		for (int j = 0; j < num_nodes[l + 1]; ++j) {
-			for (int i = 0; i < num_nodes[l]; ++i) {
-				wb[l][j][i] -= KAN_LR * (delta[l + 1][j] * silu_out[l][i]);
-				ws[l][j][i] -= KAN_LR * (delta[l + 1][j] * spline_out[l][j][i]);
-				//wb[l][j][i] -= KAN_LR * (delta[l + 1][j] * silu(out[l][i]));
-				//ws[l][j][i] -= KAN_LR * (delta[l + 1][j] * bspline(out[l][i], coeff[l][j][i], knots, basis_out[l][i]));
-			}
-		}
-	}
-
 	// update spline coefficient
 	for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
@@ -153,6 +141,18 @@ void kan_backprop(
 					coeff[l][j][i][c] -= KAN_LR * (delta[l + 1][j] * ws[l][j][i] * basis_out[l][i][c]);
 					//coeff[l][j][i][c] -= KAN_LR * (delta[l + 1][j] * ws[l][j][i] * de_boor_cox(out[l][i], c, SPLINE_ORDER, knots));
 				}
+			}
+		}
+	}
+
+	// update wb, ws
+	for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
+		for (int j = 0; j < num_nodes[l + 1]; ++j) {
+			for (int i = 0; i < num_nodes[l]; ++i) {
+				wb[l][j][i] -= KAN_LR * (delta[l + 1][j] * silu_out[l][i]);
+				ws[l][j][i] -= KAN_LR * (delta[l + 1][j] * spline_out[l][j][i]);
+				//wb[l][j][i] -= KAN_LR * (delta[l + 1][j] * silu(out[l][i]));
+				//ws[l][j][i] -= KAN_LR * (delta[l + 1][j] * bspline(out[l][i], coeff[l][j][i], knots, basis_out[l][i]));
 			}
 		}
 	}
