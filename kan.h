@@ -9,6 +9,8 @@
 #define SPLINE_ORDER 3
 #define NUM_CP (GRID_SIZE + SPLINE_ORDER)
 #define NUM_KNOTS (GRID_SIZE + 1 + SPLINE_ORDER * 2)
+#define GRID_MIN -1.0
+#define GRID_MAX 1.0
 #define KAN_LR 0.005
 
 // ìÆçÏíËã`

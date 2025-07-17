@@ -113,8 +113,8 @@ double spline_derive(double x, double coeff[NUM_CP], double knots[NUM_KNOTS], do
 	for (int i = 0; i < NUM_CP; ++i) {
 		double dbasis = 0;
 		if (func_type == B_SPLINE) dbasis = b_spline_basis_derive(x, i, SPLINE_ORDER, knots);
-		else if (func_type == GRBF) dbasis = grbf_derive(x, knots[i], basis_out[i]);
-		else if (func_type == RSWAF) dbasis = rswaf_derive(x, knots[i], basis_out[i]);
+		else if (func_type == GRBF) dbasis = grbf_derive(x, knots[i + SPLINE_ORDER], basis_out[i]);
+		else if (func_type == RSWAF) dbasis = rswaf_derive(x, knots[i + SPLINE_ORDER], basis_out[i]);
 		//else if (func_type == RELU_KAN) dbasis = relu_kan_derive(x);
 
 		sum += coeff[i] * dbasis;

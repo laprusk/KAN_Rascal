@@ -51,9 +51,10 @@ void kan_init(
 	}
 
 	// ノットベクトル
-	knots[0] = -(double)SPLINE_ORDER / GRID_SIZE;
-	for (int k = 1; k < NUM_KNOTS; ++k) {
-		knots[k] = knots[k - 1] + 1.0 / GRID_SIZE;
+	const double grid_step = (double)(GRID_MAX - GRID_MIN) / GRID_SIZE;
+	knots[0] = GRID_MIN - grid_step * SPLINE_ORDER;
+	for (int i = 1; i < NUM_KNOTS; ++i) {
+		knots[i] = knots[i - 1] + grid_step;
 	}
 
 }

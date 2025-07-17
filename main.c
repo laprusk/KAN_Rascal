@@ -202,7 +202,7 @@ void train_kan() {
 int main() {
 
 	// 乱数初期化
-	//srand((unsigned int)time(NULL));
+	srand((unsigned int)time(NULL));
 	//srand(3);
 	
 	// データセット読み込み
