@@ -149,7 +149,7 @@ void train_kan() {
 	// init weight
 	kan_init(kan_num_nodes, wb, ws, coeff, knots);
 
-	// Timer Start
+	// timer Start
 	const clock_t start_clock = clock();
 
 	// train loop
@@ -202,7 +202,7 @@ void train_kan() {
 int main() {
 
 	// 乱数初期化
-	srand((unsigned int)time(NULL));
+	//srand((unsigned int)time(NULL));
 	//srand(3);
 	
 	// データセット読み込み

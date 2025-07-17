@@ -22,7 +22,7 @@ double b_spline_basis(double x, int i, int order, double knots[NUM_KNOTS]) {
 // Gaussian Radial Basis Function (Fast-KAN)
 double grbf(double x, double knot) {
 
-	const double bi = exp(-pow((x - knot) / DENOMINATOR, 2));
+	const double bi = exp(-pow((x - knot) * INV_DENOMINATOR, 2));
 	
 	return bi;
 }
@@ -31,7 +31,7 @@ double grbf(double x, double knot) {
 // Reflectional SWitch Activation Function (Faster-KAN)
 double rswaf(double x, double knot) {
 
-	const double bi = 1 - pow(tanh((x - knot) / DENOMINATOR), 2);
+	const double bi = 1 - pow(tanh((x - knot) * INV_DENOMINATOR), 2);
 
 	return bi;
 }
@@ -82,8 +82,8 @@ double b_spline_basis_derive(double x, int i, int order, double knots[NUM_KNOTS]
 // Gaussian Radial Basis Function (Fast-KAN)
 double grbf_derive(double x, double knot , double basis_out) {
 
-	//const double dbi = -2 * basis_out * ((x - knot) / (DENOMINATOR * DENOMINATOR));
-	const double dbi = -2 * grbf(x, knot) * ((x - knot) / (DENOMINATOR * DENOMINATOR));
+	const double dbi = -2 * basis_out * ((x - knot) * (INV_DENOMINATOR * INV_DENOMINATOR));
+	//const double dbi = -2 * grbf(x, knot) * ((x - knot) * (INV_DENOMINATOR * INV_DENOMINATOR));
 
 	return dbi;
 }
@@ -92,8 +92,8 @@ double grbf_derive(double x, double knot , double basis_out) {
 // Reflectional SWitch Activation Function (Faster-KAN)
 double rswaf_derive(double x, double knot, double basis_out) {
 
-	//const double dbi = (-2 / DENOMINATOR) * basis_out * tanh((x - knot) / DENOMINATOR);
-	const double dbi = (-2 / DENOMINATOR) * rswaf(x, knot) * tanh((x - knot) / DENOMINATOR);
+	const double dbi = (-2 * INV_DENOMINATOR) * basis_out * tanh((x - knot) * INV_DENOMINATOR);
+	//const double dbi = (-2 * INV_DENOMINATOR) * rswaf(x, knot) * tanh((x - knot) * INV_DENOMINATOR);
 
 	return dbi;
 }
@@ -114,9 +114,8 @@ double spline_derive(double x, double coeff[NUM_CP], double knots[NUM_KNOTS], do
 		double dbasis = 0;
 		if (func_type == B_SPLINE) dbasis = b_spline_basis_derive(x, i, SPLINE_ORDER, knots);
 		else if (func_type == GRBF) dbasis = grbf_derive(x, knots[i], basis_out[i]);
-		//else if (func_type == GRBF) dbasis = rswaf_derive(x, knots[i], basis_out[i]);
 		else if (func_type == RSWAF) dbasis = rswaf_derive(x, knots[i], basis_out[i]);
-		//else if (func_type == RELU_KAN) dbasis = relu_kan(x);
+		//else if (func_type == RELU_KAN) dbasis = relu_kan_derive(x);
 
 		sum += coeff[i] * dbasis;
 	}

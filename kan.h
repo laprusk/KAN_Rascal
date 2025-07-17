@@ -11,6 +11,9 @@
 #define NUM_KNOTS (GRID_SIZE + 1 + SPLINE_ORDER * 2)
 #define KAN_LR 0.005
 
+// ìÆçÏíËã`
+#define USE_ONLY_COEFFICIENT 1
+
 typedef enum {
 	B_SPLINE,			// Original
 	GRBF,					// Fast-KAN
