@@ -12,10 +12,11 @@ void kan_init(
 	double wb[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double ws[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP],
-	double knots[NUM_KNOTS]
+	double knots[NUM_KNOTS],
+	KANFunction func_type
 ) {
 
-	if (!USE_ONLY_COEFFICIENT) {
+	if (!NO_WEIGHT_AND_BASIS) {
 
 		// wbはXavier初期化
 		for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
@@ -51,10 +52,19 @@ void kan_init(
 	}
 
 	// ノットベクトル
-	const double grid_step = (double)(GRID_MAX - GRID_MIN) / GRID_SIZE;
-	knots[0] = GRID_MIN - grid_step * SPLINE_ORDER;
-	for (int i = 1; i < NUM_KNOTS; ++i) {
-		knots[i] = knots[i - 1] + grid_step;
+	if (func_type == B_SPLINE) {
+		const double grid_step = (double)(GRID_MAX - GRID_MIN) / GRID_SIZE;
+		knots[0] = GRID_MIN - grid_step * SPLINE_ORDER;
+		for (int i = 1; i < NUM_KNOTS; ++i) {
+			knots[i] = knots[i - 1] + grid_step;
+		}
+	}
+	else {
+		const double grid_step = (double)(GRID_MAX - GRID_MIN) / NUM_CP;
+		knots[0] = GRID_MIN;
+		for (int i = 1; i < NUM_CP; ++i) {
+			knots[i] = knots[i - 1] + grid_step;
+		}
 	}
 
 }
@@ -88,7 +98,7 @@ void kan_forward(
 			for (int i = 0; i < num_nodes[l]; ++i) {
 				spline_out[l][j][i] = spline(out[l][i], coeff[l][j][i], knots, basis_out[l][i], func_type);
 
-				if (USE_ONLY_COEFFICIENT) out[l + 1][j] += spline_out[l][j][i];
+				if (NO_WEIGHT_AND_BASIS) out[l + 1][j] += spline_out[l][j][i];
 				else out[l + 1][j] += wb[l][j][i] * silu_out[l][i] + ws[l][j][i] * spline_out[l][j][i];
 			}
 		}
@@ -134,7 +144,7 @@ void kan_backprop(
 				const double dspline = spline_derive(out[l][i], coeff[l][j][i], knots, basis_out[l][i], func_type);
 				//const double dspline = 1;
 
-				if (USE_ONLY_COEFFICIENT) delta[l][i] += dspline * delta[l + 1][j];
+				if (NO_WEIGHT_AND_BASIS) delta[l][i] += dspline * delta[l + 1][j];
 				delta[l][i] += (wb[l][j][i] * dsilu + ws[l][j][i] * dspline) * delta[l + 1][j];
 			}
 		}
@@ -145,14 +155,14 @@ void kan_backprop(
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			for (int i = 0; i < num_nodes[l]; ++i) {
 				for (int c = 0; c < NUM_CP; ++c) {
-					if (USE_ONLY_COEFFICIENT) coeff[l][j][i][c] -= KAN_LR * (delta[l + 1][j] * basis_out[l][i][c]);
+					if (NO_WEIGHT_AND_BASIS) coeff[l][j][i][c] -= KAN_LR * (delta[l + 1][j] * basis_out[l][i][c]);
 					else coeff[l][j][i][c] -= KAN_LR * (delta[l + 1][j] * ws[l][j][i] * basis_out[l][i][c]);
 				}
 			}
 		}
 	}
 
-	if (!USE_ONLY_COEFFICIENT) {
+	if (!NO_WEIGHT_AND_BASIS) {
 		// update wb, ws
 		for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
 			for (int j = 0; j < num_nodes[l + 1]; ++j) {

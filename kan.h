@@ -14,7 +14,7 @@
 #define KAN_LR 0.005
 
 // 動作定義
-#define USE_ONLY_COEFFICIENT 1
+#define NO_WEIGHT_AND_BASIS 0			// SiLU基底関数と重みを使用しない
 
 typedef enum {
 	B_SPLINE,			// Original
@@ -28,7 +28,8 @@ void kan_init(
 	double wb[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double ws[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP],
-	double knots[NUM_KNOTS]
+	double knots[NUM_KNOTS],
+	KANFunction func_type
 );
 void kan_forward(
 	double x[DIM],
