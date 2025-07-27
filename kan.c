@@ -71,13 +71,15 @@ void kan_init(
 
 	// ReLU-KAN
 	if (func_type == RELU_KAN) {
-		const double inv_g = 1.0 / GRID_SIZE;
+		const double grid_step = (double)(GRID_MAX - GRID_MIN) / GRID_SIZE;
 
 		for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
 			for (int i = 0; i < num_nodes[l]; ++i) {
-				for (int c = 0; c < NUM_CP; ++c) {
-					phase_height[l][i][c] = c * inv_g;
-					phase_low[l][i][c] = (c - SPLINE_ORDER - 1) * inv_g;
+				phase_low[l][i][0] = GRID_MIN - grid_step * SPLINE_ORDER;
+				phase_height[l][i][0] = GRID_MIN + grid_step;
+				for (int c = 1; c < NUM_CP; ++c) {
+					phase_low[l][i][c] = phase_low[l][i][c - 1] + grid_step;
+					phase_height[l][i][c] = phase_height[l][i][c - 1] + grid_step;
 				}
 			}
 		}

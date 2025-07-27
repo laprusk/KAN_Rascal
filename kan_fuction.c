@@ -40,8 +40,8 @@ double rswaf(double x, double knot) {
 // ReLU-KAN
 double relu_kan(double x, double phase_low, double phase_height) {
 
-	const double a = relu(phase_low - x);
-	const double b = relu(x - phase_height);
+	const double a = relu(x - phase_low);
+	const double b = relu(phase_height - x);
 	const double inv_norm = 16 / pow(phase_height - phase_low, 4);
 	const double ri = pow(a * b, 2) * inv_norm;
 
@@ -103,8 +103,16 @@ double rswaf_derive(double x, double knot, double basis_out) {
 
 
 // ReLU-KAN
-double relu_kan_derive(double x, int i, double knots[NUM_KNOTS]) {
+double relu_kan_derive(double x, double phase_low, double phase_height) {
 
+	const double relu_pl = relu(x - phase_low);
+	const double relu_ph = relu(phase_height - x);
+	const double d_relu_pl = relu_derive(x - phase_low);
+	const double d_relu_ph = relu_derive(phase_height - x);
+
+	const double dri = 2 * relu_ph * relu_pl * (-d_relu_ph * relu_pl + relu_ph * d_relu_pl);
+
+	return dri;
 }
 
 
@@ -121,7 +129,7 @@ double spline_derive(
 		if (func_type == B_SPLINE) dbasis = b_spline_basis_derive(x, i, SPLINE_ORDER, knots);
 		else if (func_type == GRBF) dbasis = grbf_derive(x, knots[i], basis_out[i]);
 		else if (func_type == RSWAF) dbasis = rswaf_derive(x, knots[i], basis_out[i]);
-		//else if (func_type == RELU_KAN) dbasis = relu_kan_derive(x);
+		else if (func_type == RELU_KAN) dbasis = relu_kan_derive(x, phase_low[i], phase_height[i]);
 
 		sum += coeff[i] * dbasis;
 	}

@@ -41,7 +41,7 @@ double cnn_dbias[NUM_SEGMENTS][COUNT_CONV][MAX_CH];
 
 
 // KAN
-const KANFunction func_type = GRBF;
+const KANFunction func_type = RELU_KAN;
 int kan_num_nodes[KAN_NUM_LAYERS] = { KAN_INPUT_DIM, 16, NUM_CLASSES };
 double knots[NUM_KNOTS];
 double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP];
@@ -171,8 +171,8 @@ void train_kan() {
 			convert_one_hot(train_label[i], tk);
 
 			// forward & backprop
-			kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, PhaseHeight, PhaseLow, kan_out, silu_out, spline_out, basis_out, func_type);
-			kan_backprop(tk, kan_num_nodes, wb, ws, coeff, knots, PhaseHeight, PhaseLow, kan_out, kan_delta, silu_out, spline_out, basis_out, func_type);
+			kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, PhaseLow, PhaseHeight, kan_out, silu_out, spline_out, basis_out, func_type);
+			kan_backprop(tk, kan_num_nodes, wb, ws, coeff, knots, PhaseLow, PhaseHeight, kan_out, kan_delta, silu_out, spline_out, basis_out, func_type);
 		}
 
 		// evaluate test
@@ -182,7 +182,7 @@ void train_kan() {
 			memcpy(x, test_data[i], sizeof(test_data[i]));
 
 			// forward only
-			kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, PhaseHeight, PhaseLow, kan_out, silu_out, spline_out, basis_out, func_type);
+			kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, PhaseLow, PhaseHeight, kan_out, silu_out, spline_out, basis_out, func_type);
 			if (mlp_is_collect(kan_out[KAN_NUM_LAYERS - 1], test_label[i])) ++count;
 		}
 		const double sec = (double)(clock() - start_clock) / CLOCKS_PER_SEC;
@@ -196,7 +196,7 @@ void train_kan() {
 		memcpy(x, train_data[i], sizeof(train_data[i]));
 
 		// forward only
-		kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, PhaseHeight, PhaseLow, kan_out, silu_out, spline_out, basis_out, func_type);
+		kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, PhaseLow, PhaseHeight, kan_out, silu_out, spline_out, basis_out, func_type);
 		if (mlp_is_collect(kan_out[KAN_NUM_LAYERS - 1], train_label[i])) ++count;
 	}
 	printf("Train: %.3f\n\n", (double)count / NUM_TRAINS);

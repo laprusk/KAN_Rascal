@@ -8,8 +8,13 @@ double sigmoid(double x) {
 
 
 double relu(double x) {
-	if (x < 0) return 0;
+	if (x <= 0) return 0;
 	else return x;
+}
+
+double relu_derive(double x) {
+	if (x <= 0) return 0;
+	else return 1;
 }
 
 double silu(double x) {
