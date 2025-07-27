@@ -29,6 +29,8 @@ void kan_init(
 	double ws[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP],
 	double knots[NUM_KNOTS],
+	double phase_low[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP],
+	double phase_height[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP],
 	KANFunction func_type
 );
 void kan_forward(
@@ -38,6 +40,8 @@ void kan_forward(
 	double ws[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP],
 	double knots[NUM_KNOTS],
+	double phase_low[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP],
+	double phase_height[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP],
 	double out[KAN_NUM_LAYERS][KAN_MAX_NODES],
 	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],
 	double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
@@ -51,6 +55,8 @@ void kan_backprop(
 	double ws[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP],
 	double knots[NUM_KNOTS],
+	double phase_low[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP],
+	double phase_height[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP],
 	double out[KAN_NUM_LAYERS][KAN_MAX_NODES],
 	double delta[KAN_NUM_LAYERS][KAN_MAX_NODES],
 	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],

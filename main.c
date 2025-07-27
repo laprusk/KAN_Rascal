@@ -41,8 +41,8 @@ double cnn_dbias[NUM_SEGMENTS][COUNT_CONV][MAX_CH];
 
 
 // KAN
-int kan_num_nodes[KAN_NUM_LAYERS] = { KAN_INPUT_DIM, 16, NUM_CLASSES };
 const KANFunction func_type = GRBF;
+int kan_num_nodes[KAN_NUM_LAYERS] = { KAN_INPUT_DIM, 16, NUM_CLASSES };
 double knots[NUM_KNOTS];
 double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP];
 double wb[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES];
@@ -53,6 +53,11 @@ double kan_delta[KAN_NUM_LAYERS][KAN_MAX_NODES];
 double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES];
 double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES];
 double basis_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP];
+
+
+// ReLU-KAN
+double PhaseLow[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP];
+double PhaseHeight[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP];
 
 
 // Dataset
