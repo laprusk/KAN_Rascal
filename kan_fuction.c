@@ -50,7 +50,10 @@ double relu_kan(double x, double ei, double si) {
 
 
 // スプライン曲線
-double spline(double x, double coeff[NUM_CP], double knots[NUM_KNOTS], double basis_out[NUM_CP], KANFunction func_type) {
+double spline(
+	double x, double coeff[NUM_CP], double knots[NUM_KNOTS], double phase_low[NUM_CP], double phase_height[NUM_CP],
+	double basis_out[NUM_CP], KANFunction func_type
+) {
 
 	double sum = 0;
 
@@ -106,7 +109,10 @@ double relu_kan_derive(double x, int i, double knots[NUM_KNOTS]) {
 
 
 // スプライン曲線の微分
-double spline_derive(double x, double coeff[NUM_CP], double knots[NUM_KNOTS], double basis_out[NUM_CP], KANFunction func_type) {
+double spline_derive(
+	double x, double coeff[NUM_CP], double knots[NUM_KNOTS], double phase_low[NUM_CP], double phase_height[NUM_CP],
+	double basis_out[NUM_CP], KANFunction func_type
+) {
 
 	double sum = 0;
 
