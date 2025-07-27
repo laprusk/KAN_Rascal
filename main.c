@@ -149,7 +149,10 @@ void train_kan() {
 	bool tk[NUM_CLASSES];
 	int train_order[NUM_TRAINS];
 
-	printf("train KAN...\n\n");
+	if (func_type == B_SPLINE) printf("KAN\n\n");
+	else if (func_type == GRBF) printf("Fast-KAN\n\n");
+	else if (func_type == RSWAF) printf("Faster-KAN\n\n");
+	else if (func_type == RELU_KAN) printf("ReLU-KAN\n\n");
 
 	// init weight
 	kan_init(kan_num_nodes, wb, ws, coeff, knots, PhaseHeight, PhaseLow, func_type);
