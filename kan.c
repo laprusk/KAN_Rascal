@@ -69,6 +69,20 @@ void kan_init(
 		}
 	}
 
+	// ReLU-KAN
+	if (func_type == RELU_KAN) {
+		const double inv_g = 1.0 / GRID_SIZE;
+
+		for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
+			for (int i = 0; i < num_nodes[l]; ++i) {
+				for (int c = 0; c < NUM_CP; ++c) {
+					phase_height[l][i][c] = c * inv_g;
+					phase_low[l][i][c] = (c - SPLINE_ORDER - 1) * inv_g;
+				}
+			}
+		}
+	}
+
 }
 
 
@@ -100,7 +114,7 @@ void kan_forward(
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			out[l + 1][j] = 0;
 			for (int i = 0; i < num_nodes[l]; ++i) {
-				spline_out[l][j][i] = spline(out[l][i], coeff[l][j][i], knots, basis_out[l][i], func_type);
+				spline_out[l][j][i] = spline(out[l][i], coeff[l][j][i], knots, phase_height, phase_low, basis_out[l][i], func_type);
 
 				if (NO_WEIGHT_AND_BASIS) out[l + 1][j] += spline_out[l][j][i];
 				else out[l + 1][j] += wb[l][j][i] * silu_out[l][i] + ws[l][j][i] * spline_out[l][j][i];
@@ -147,7 +161,7 @@ void kan_backprop(
 			const double dsilu = sig_out + out[l][i] * sig_out * (1 - sig_out);
 			//const double dsilu = 1;
 			for (int j = 0; j < num_nodes[l + 1]; ++j) {
-				const double dspline = spline_derive(out[l][i], coeff[l][j][i], knots, basis_out[l][i], func_type);
+				const double dspline = spline_derive(out[l][i], coeff[l][j][i], knots, phase_height, phase_low, basis_out[l][i], func_type);
 				//const double dspline = 1;
 
 				if (NO_WEIGHT_AND_BASIS) delta[l][i] += dspline * delta[l + 1][j];

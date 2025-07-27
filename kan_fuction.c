@@ -38,11 +38,11 @@ double rswaf(double x, double knot) {
 
 
 // ReLU-KAN
-double relu_kan(double x, double ei, double si) {
+double relu_kan(double x, double phase_low, double phase_height) {
 
-	const double a = relu(ei - x);
-	const double b = relu(x - si);
-	const double inv_norm = 16 / pow(ei - si, 4);
+	const double a = relu(phase_low - x);
+	const double b = relu(x - phase_height);
+	const double inv_norm = 16 / pow(phase_height - phase_low, 4);
 	const double ri = pow(a * b, 2) * inv_norm;
 
 	return ri;
@@ -62,7 +62,7 @@ double spline(
 		if (func_type == B_SPLINE) basis_out[i] = b_spline_basis(x, i, SPLINE_ORDER, knots);
 		else if (func_type == GRBF) basis_out[i] = grbf(x, knots[i]);
 		else if (func_type == RSWAF) basis_out[i] = rswaf(x, knots[i]);
-		//else if (func_type == RELU_KAN) basis_out[i] = relu_kan(x);
+		else if (func_type == RELU_KAN) basis_out[i] = relu_kan(x, phase_low[i], phase_height[i]);
 
 		sum += coeff[i] * basis_out[i];
 	}
