@@ -1,11 +1,12 @@
+#include <stdio.h>
+#include <stdbool.h>
+#include <time.h>
+#include <string.h>
 #include "mlp.h"
 #include "cnn.h"
 #include "kan.h"
 #include "dataset.h"
 #include "util.h"
-#include <stdio.h>
-#include <stdbool.h>
-#include <time.h>
 
 
 // íËêî
@@ -41,7 +42,7 @@ double cnn_dbias[NUM_SEGMENTS][COUNT_CONV][MAX_CH];
 
 
 // KAN
-const KANFunction func_type = RELU_KAN;
+const KANFunction func_type = B_SPLINE;
 int kan_num_nodes[KAN_NUM_LAYERS] = { KAN_INPUT_DIM, 16, NUM_CLASSES };
 double knots[NUM_KNOTS];
 double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP];
