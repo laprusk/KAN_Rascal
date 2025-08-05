@@ -3,6 +3,8 @@
 typedef enum {
 	SIGMOID,
 	RELU,
+	SILU,
+	GELU,
 	SOFTMAX
 } Activation;
 

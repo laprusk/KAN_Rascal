@@ -14,7 +14,8 @@
 #define KAN_LR 0.005
 
 // 動作定義
-#define NO_WEIGHT_AND_BASIS 1			// SiLU基底関数と重みを使用しない
+#define NO_WEIGHT_AND_BASIS 1			// SiLU基底関数と線形重みを使用しない
+#define LAYER_NORM 1
 
 typedef enum {
 	B_SPLINE,			// Original
@@ -46,6 +47,8 @@ void kan_forward(
 	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],
 	double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double basis_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP],
+	double mean[KAN_NUM_LAYERS],
+	double var[KAN_NUM_LAYERS],
 	KANFunction func_type
 );
 void kan_backprop(
@@ -62,5 +65,7 @@ void kan_backprop(
 	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],
 	double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double basis_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP],
+	double mean[KAN_NUM_LAYERS],
+	double var[KAN_NUM_LAYERS],
 	KANFunction func_type
 );

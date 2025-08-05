@@ -7,6 +7,24 @@
 #include "util.h"
 
 
+const double EPS = 0.00001;
+
+
+void kan_layer_norm_forward(
+	int num_nodes,
+	double out[KAN_MAX_NODES],
+	double* mean,
+	double* var
+);
+void kan_layer_norm_backprop(
+	int num_nodes,
+	double out[KAN_MAX_NODES],
+	double delta[KAN_MAX_NODES],
+	double mean,
+	double var
+);
+
+
 void kan_init(
 	int num_nodes[KAN_NUM_LAYERS],
 	double wb[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
@@ -101,6 +119,8 @@ void kan_forward(
 	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],
 	double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double basis_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP],
+	double mean[KAN_NUM_LAYERS],
+	double var[KAN_NUM_LAYERS],
 	KANFunction func_type
 ) {
 
@@ -116,12 +136,15 @@ void kan_forward(
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			out[l + 1][j] = 0;
 			for (int i = 0; i < num_nodes[l]; ++i) {
-				spline_out[l][j][i] = spline(out[l][i], coeff[l][j][i], knots, phase_height, phase_low, basis_out[l][i], func_type);
+				spline_out[l][j][i] = spline(out[l][i], coeff[l][j][i], knots, phase_low[l][i], phase_height[l][i], basis_out[l][i], func_type);
 
 				if (NO_WEIGHT_AND_BASIS) out[l + 1][j] += spline_out[l][j][i];
 				else out[l + 1][j] += wb[l][j][i] * silu_out[l][i] + ws[l][j][i] * spline_out[l][j][i];
 			}
 		}
+
+		// Layer Norm
+		if (LAYER_NORM) kan_layer_norm_forward(num_nodes[l + 1], out[l + 1], &mean[l + 1], &var[l + 1]);
 	}
 
 	// ÅI‘w‚Åsoftmax
@@ -145,6 +168,8 @@ void kan_backprop(
 	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],
 	double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double basis_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP],
+	double mean[KAN_NUM_LAYERS],
+	double var[KAN_NUM_LAYERS],
 	KANFunction func_type
 ) {
 
@@ -157,13 +182,16 @@ void kan_backprop(
 
 	// hidden layer
 	for (int l = KAN_NUM_LAYERS - 2; l > 0; --l) {
+		// Layer Norm
+		if (LAYER_NORM) kan_layer_norm_backprop(num_nodes[l + 1], out[l + 1], delta[l + 1], mean[l + 1], var[l + 1]);
+
 		for (int i = 0; i < num_nodes[l]; ++i) {
 			delta[l][i] = 0;
 			const double sig_out = sigmoid(out[l][i]);
 			const double dsilu = sig_out + out[l][i] * sig_out * (1 - sig_out);
 			//const double dsilu = 1;
 			for (int j = 0; j < num_nodes[l + 1]; ++j) {
-				const double dspline = spline_derive(out[l][i], coeff[l][j][i], knots, phase_height, phase_low, basis_out[l][i], func_type);
+				const double dspline = spline_derive(out[l][i], coeff[l][j][i], knots, phase_low[l][i], phase_height[l][i], basis_out[l][i], func_type);
 				//const double dspline = 1;
 
 				if (NO_WEIGHT_AND_BASIS) delta[l][i] += dspline * delta[l + 1][j];
@@ -193,7 +221,69 @@ void kan_backprop(
 					ws[l][j][i] -= KAN_LR * (delta[l + 1][j] * spline_out[l][j][i]);
 				}
 			}
-		}
+		}	
+	}
+
+}
+
+
+void kan_layer_norm_forward(
+	int num_nodes,
+	double out[KAN_MAX_NODES],
+	double *mean,
+	double *var
+) {
+
+	// mean
+	double sum = 0;
+	for (int i = 0; i < num_nodes; ++i) {
+		sum += out[i];
+	}
+	*mean = sum / num_nodes;
+
+	// var
+	sum = 0;
+	for (int i = 0; i < num_nodes; ++i) {
+		sum += (out[i] - *mean) * (out[i] - *mean);
+	}
+	*var = sum / num_nodes;
+
+	// normalize
+	for (int i = 0; i < num_nodes; ++i) {
+		out[i] = (out[i] - *mean) / sqrt(*var + EPS);
+	}
+
+}
+
+
+void kan_layer_norm_backprop(
+	int num_nodes,
+	double out[KAN_MAX_NODES],
+	double delta[KAN_MAX_NODES],
+	double mean,
+	double var
+) {
+
+	double inv_std = 1 / sqrt(var + EPS);
+
+	// var
+	double dvar = 0;
+	for (int i = 0; i < num_nodes; ++i) {
+		dvar += delta[i] * (out[i] - mean) * (-0.5) * pow(var + EPS, -1.5);
+	}
+
+	// mean
+	double dmean = 0;
+	for (int i = 0; i < num_nodes; ++i) {
+		dmean += -2 * (out[i] - mean);
+	}
+	dmean *= dvar / num_nodes;
+	for (int i = 0; i < num_nodes; ++i) {
+		dmean += delta[i] * (-inv_std);
+	}
+
+	for (int i = 0; i < num_nodes; ++i) {
+		delta[i] = delta[i] * inv_std + dvar * 2 * (out[i] - mean) / num_nodes + dmean / num_nodes;
 	}
 
 }
