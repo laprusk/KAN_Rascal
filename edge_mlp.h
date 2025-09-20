@@ -2,23 +2,26 @@
 
 #include "activation.h"
 
-#define EDGE_MLP_NUM_LAYERS 3
-#define EDGE_MLP_MAX_NODES 4
+#define EMLP_NUM_LAYERS 3
+#define EMLP_MAX_NODES 4
 
-double edge_mlp_forward(
-	double x,
-	int num_nodes[EDGE_MLP_NUM_LAYERS],
-	double weight[EDGE_MLP_NUM_LAYERS - 1][EDGE_MLP_MAX_NODES][EDGE_MLP_MAX_NODES],
-	double bias[EDGE_MLP_NUM_LAYERS - 1][EDGE_MLP_MAX_NODES],
-	double out[EDGE_MLP_NUM_LAYERS][EDGE_MLP_MAX_NODES],
-	Activation activation
+void emlp_init(
+	int num_nodes[EMLP_NUM_LAYERS],
+	double weight[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES],
+	double bias[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES]
 );
-void edge_mlp_backprop(
+void emlp_forward(
+	double x,
+	int num_nodes[EMLP_NUM_LAYERS],
+	double weight[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES],
+	double bias[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES],
+	double out[EMLP_NUM_LAYERS][EMLP_MAX_NODES]
+);
+void emlp_backprop(
 	double kan_delta,
-	int num_nodes[EDGE_MLP_NUM_LAYERS],
-	double weight[EDGE_MLP_NUM_LAYERS - 1][EDGE_MLP_MAX_NODES][EDGE_MLP_MAX_NODES],
-	double bias[EDGE_MLP_NUM_LAYERS - 1][EDGE_MLP_MAX_NODES],
-	double out[EDGE_MLP_NUM_LAYERS][EDGE_MLP_MAX_NODES],
-	double delta[EDGE_MLP_NUM_LAYERS][EDGE_MLP_MAX_NODES],
-	Activation activation
+	int num_nodes[EMLP_NUM_LAYERS],
+	double weight[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES],
+	double bias[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES],
+	double out[EMLP_NUM_LAYERS][EMLP_MAX_NODES],
+	double delta[EMLP_NUM_LAYERS][EMLP_MAX_NODES]
 );

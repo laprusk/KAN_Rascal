@@ -130,9 +130,11 @@
     <ClCompile Include="activation.c" />
     <ClCompile Include="cnn.c" />
     <ClCompile Include="dataset.c" />
+    <ClCompile Include="edge_mlp.c" />
     <ClCompile Include="kan.c" />
     <ClCompile Include="kan_fuction.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="mikan.c" />
     <ClCompile Include="mlp.c" />
     <ClCompile Include="util.c" />
   </ItemGroup>

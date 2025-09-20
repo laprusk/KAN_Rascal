@@ -5,7 +5,7 @@
 #include "mlp.h"
 #include "cnn.h"
 #include "kan.h"
-#include "edge_mlp.h"
+#include "mikan.h"
 #include "dataset.h"
 #include "util.h"
 
@@ -16,7 +16,7 @@ const bool CNN = 0;
 
 
 // MLP
-int mlp_num_nodes[MLP_NUM_LAYERS] = {MLP_INPUT_DIM, 64, NUM_CLASSES};
+int mlp_num_nodes[MLP_NUM_LAYERS] = {MLP_INPUT_DIM, 512, NUM_CLASSES};
 const Activation HIDDEN_ACTIVATION = RELU;
 const Activation OUTPUT_ACTIVATION = SOFTMAX;
 double mlp_weight[MLP_NUM_LAYERS - 1][MLP_MAX_NODES][MLP_MAX_NODES];
@@ -43,7 +43,7 @@ double cnn_dbias[NUM_SEGMENTS][COUNT_CONV][MAX_CH];
 
 
 // KAN
-const KANFunction func_type = RELU_KAN;
+const KANFunction func_type = GRBF;
 int kan_num_nodes[KAN_NUM_LAYERS] = { KAN_INPUT_DIM, 64, NUM_CLASSES };
 double knots[NUM_KNOTS];
 double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP];
@@ -63,13 +63,12 @@ double PhaseLow[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP];
 double PhaseHeight[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP];
 
 // MIKAN
-int EdgeMLPNumNodes[EDGE_MLP_NUM_LAYERS] = { 1, 4, 1 };
-const Activation EDGE_MLP_ACTIVATION = SILU;
-double EdgeMLPWeight[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EDGE_MLP_NUM_LAYERS - 1][EDGE_MLP_MAX_NODES][EDGE_MLP_MAX_NODES];
-double EdgeMLPBias[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EDGE_MLP_NUM_LAYERS - 1][EDGE_MLP_MAX_NODES];
+int EMLPNumNodes[EMLP_NUM_LAYERS] = { 1, 4, 1 };
+double EMLPWeight[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES];
+double EMLPBias[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES];
 // online
-double EdgeMLPOut[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EDGE_MLP_NUM_LAYERS][EDGE_MLP_MAX_NODES];
-double EdgeMLPDelta[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EDGE_MLP_NUM_LAYERS][EDGE_MLP_MAX_NODES];
+double EMLPOut[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS][EMLP_MAX_NODES];
+double EMLPDelta[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS][EMLP_MAX_NODES];
 
 
 // Dataset
@@ -219,10 +218,71 @@ void train_kan() {
 }
 
 
+void train_mikan() {
+
+	double x[DIM];
+	bool tk[NUM_CLASSES];
+	int train_order[NUM_TRAINS];
+
+	printf("MIKAN\n\n");
+
+	// init weight
+	mikan_init(kan_num_nodes, wb, ws, EMLPNumNodes, EMLPWeight, EMLPBias);
+
+	// timer Start
+	const clock_t start_clock = clock();
+
+	// train loop
+	for (int ep = 0; ep < EPOCH_MAX; ++ep) {
+		// shuffle dataset order
+		for (int i = 0; i < NUM_TRAINS; ++i) train_order[i] = i;
+		shuffle(train_order, NUM_TRAINS);
+
+		// train
+		for (int t = 0; t < NUM_TRAINS; ++t) {
+			// make input & label
+			int i = train_order[t];
+			memcpy(x, train_data[i], sizeof(train_data[i]));
+			convert_one_hot(train_label[i], tk);
+
+			// forward & backprop
+			mikan_forward(x, kan_num_nodes, wb, ws, EMLPNumNodes, EMLPWeight, EMLPBias, EMLPOut, kan_out, silu_out, KanMean, KanVar);
+			mikan_backprop(tk, kan_num_nodes, wb, ws, EMLPNumNodes, EMLPWeight, EMLPBias, EMLPOut, EMLPDelta, kan_out, kan_delta, silu_out, KanMean, KanVar);
+		}
+
+		// evaluate test
+		int count = 0;
+		for (int t = 0; t < NUM_TESTS; ++t) {
+			int i = t;
+			memcpy(x, test_data[i], sizeof(test_data[i]));
+
+			// forward only
+			mikan_forward(x, kan_num_nodes, wb, ws, EMLPNumNodes, EMLPWeight, EMLPBias, EMLPOut, kan_out, silu_out, KanMean, KanVar);
+			if (mlp_is_collect(kan_out[KAN_NUM_LAYERS - 1], test_label[i])) ++count;
+		}
+		const double sec = (double)(clock() - start_clock) / CLOCKS_PER_SEC;
+		printf("Epoch %d: %.3f (%.3fs)\n", ep, (double)count / NUM_TESTS, sec);
+	}
+
+	// evaluate train
+	int count = 0;
+	for (int t = 0; t < NUM_TRAINS; ++t) {
+		int i = t;
+		memcpy(x, train_data[i], sizeof(train_data[i]));
+
+		// forward only
+		mikan_forward(x, kan_num_nodes, wb, ws, EMLPNumNodes, EMLPWeight, EMLPBias, EMLPOut, kan_out, silu_out, KanMean, KanVar);
+		if (mlp_is_collect(kan_out[KAN_NUM_LAYERS - 1], train_label[i])) ++count;
+	}
+	printf("Train: %.3f\n\n", (double)count / NUM_TRAINS);
+
+}
+
+
 int main() {
 
 	// 乱数初期化
-	//srand((unsigned int)time(NULL));
+	srand((unsigned int)time(NULL));
 	//srand(3);
 	
 	// データセット読み込み
@@ -231,7 +291,8 @@ int main() {
 	printf("Finish loading dataset!\n\n");
 
 	//train_mlp();
-	train_kan();
+	//train_kan();
+	train_mikan();
 
 	return 0;
 }

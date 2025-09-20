@@ -10,21 +10,6 @@
 const double EPS = 0.00001;
 
 
-void kan_layer_norm_forward(
-	int num_nodes,
-	double out[KAN_MAX_NODES],
-	double* mean,
-	double* var
-);
-void kan_layer_norm_backprop(
-	int num_nodes,
-	double out[KAN_MAX_NODES],
-	double delta[KAN_MAX_NODES],
-	double mean,
-	double var
-);
-
-
 void kan_init(
 	int num_nodes[KAN_NUM_LAYERS],
 	double wb[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
