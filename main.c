@@ -6,6 +6,7 @@
 #include "cnn.h"
 #include "kan.h"
 #include "mikan.h"
+#include "mikan2.h"
 #include "dataset.h"
 #include "util.h"
 
@@ -16,7 +17,7 @@ const bool CNN = 0;
 
 
 // MLP
-int mlp_num_nodes[MLP_NUM_LAYERS] = {MLP_INPUT_DIM, 512, NUM_CLASSES};
+int mlp_num_nodes[MLP_NUM_LAYERS] = {MLP_INPUT_DIM, 64, NUM_CLASSES};
 const Activation HIDDEN_ACTIVATION = RELU;
 const Activation OUTPUT_ACTIVATION = SOFTMAX;
 double mlp_weight[MLP_NUM_LAYERS - 1][MLP_MAX_NODES][MLP_MAX_NODES];
@@ -63,7 +64,6 @@ double PhaseLow[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP];
 double PhaseHeight[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP];
 
 // MIKAN
-int EMLPNumNodes[EMLP_NUM_LAYERS] = { 1, 4, 1 };
 double EMLPWeight[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES];
 double EMLPBias[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES];
 // online
@@ -224,10 +224,10 @@ void train_mikan() {
 	bool tk[NUM_CLASSES];
 	int train_order[NUM_TRAINS];
 
-	printf("MIKAN\n\n");
+	printf("MIKAN (D = %d)\n\n", EMLP_D);
 
 	// init weight
-	mikan_init(kan_num_nodes, wb, ws, EMLPNumNodes, EMLPWeight, EMLPBias);
+	mikan_init(kan_num_nodes, wb, ws, EMLPWeight, EMLPBias);
 
 	// timer Start
 	const clock_t start_clock = clock();
@@ -246,8 +246,8 @@ void train_mikan() {
 			convert_one_hot(train_label[i], tk);
 
 			// forward & backprop
-			mikan_forward(x, kan_num_nodes, wb, ws, EMLPNumNodes, EMLPWeight, EMLPBias, EMLPOut, kan_out, silu_out, KanMean, KanVar);
-			mikan_backprop(tk, kan_num_nodes, wb, ws, EMLPNumNodes, EMLPWeight, EMLPBias, EMLPOut, EMLPDelta, kan_out, kan_delta, silu_out, KanMean, KanVar);
+			mikan_forward(x, kan_num_nodes, wb, ws, EMLPWeight, EMLPBias, EMLPOut, kan_out, silu_out, KanMean, KanVar);
+			mikan_backprop(tk, kan_num_nodes, wb, ws, EMLPWeight, EMLPBias, EMLPOut, EMLPDelta, kan_out, kan_delta, silu_out, KanMean, KanVar);
 		}
 
 		// evaluate test
@@ -257,7 +257,7 @@ void train_mikan() {
 			memcpy(x, test_data[i], sizeof(test_data[i]));
 
 			// forward only
-			mikan_forward(x, kan_num_nodes, wb, ws, EMLPNumNodes, EMLPWeight, EMLPBias, EMLPOut, kan_out, silu_out, KanMean, KanVar);
+			mikan_forward(x, kan_num_nodes, wb, ws, EMLPWeight, EMLPBias, EMLPOut, kan_out, silu_out, KanMean, KanVar);
 			if (mlp_is_collect(kan_out[KAN_NUM_LAYERS - 1], test_label[i])) ++count;
 		}
 		const double sec = (double)(clock() - start_clock) / CLOCKS_PER_SEC;
@@ -271,7 +271,7 @@ void train_mikan() {
 		memcpy(x, train_data[i], sizeof(train_data[i]));
 
 		// forward only
-		mikan_forward(x, kan_num_nodes, wb, ws, EMLPNumNodes, EMLPWeight, EMLPBias, EMLPOut, kan_out, silu_out, KanMean, KanVar);
+		mikan_forward(x, kan_num_nodes, wb, ws, EMLPWeight, EMLPBias, EMLPOut, kan_out, silu_out, KanMean, KanVar);
 		if (mlp_is_collect(kan_out[KAN_NUM_LAYERS - 1], train_label[i])) ++count;
 	}
 	printf("Train: %.3f\n\n", (double)count / NUM_TRAINS);
@@ -282,7 +282,7 @@ void train_mikan() {
 int main() {
 
 	// 乱数初期化
-	srand((unsigned int)time(NULL));
+	//srand((unsigned int)time(NULL));
 	//srand(3);
 	
 	// データセット読み込み

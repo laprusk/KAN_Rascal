@@ -1,60 +1,20 @@
-#include "mikan.h"
+#include "mikan2.h"
+#include "edge_mlp.h"
 #include <stdlib.h>
 
 
-void mikan_init(
-	int num_nodes[KAN_NUM_LAYERS],
-	double wb[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
-	double ws[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
-	double emlp_weight[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES],
-	double emlp_bias[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES]
-) {
-
-	if (!NO_WEIGHT_AND_BASIS) {
-
-		// wbÇÕXavierèâä˙âª
-		for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
-			double xavier_weight = sqrt(6.0 / (num_nodes[l] + num_nodes[l + 1]));
-			for (int j = 0; j < num_nodes[l + 1]; ++j) {
-				for (int i = 0; i < num_nodes[l]; ++i) {
-					wb[l][j][i] = xavier_weight * (((double)rand() / RAND_MAX) * 2 - 1);
-					//wb[l][j][i] = 0;
-				}
-			}
-		}
-
-		// wsÇÕ1Ç≈èâä˙âª
-		for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
-			for (int j = 0; j < num_nodes[l + 1]; ++j) {
-				for (int i = 0; i < num_nodes[l]; ++i) {
-					ws[l][j][i] = 1;
-				}
-			}
-		}
-
-	}
-
-	// EdgeMLP
-	for (int l = 0; l < KAN_NUM_LAYERS - 1; ++l) {
-		for (int j = 0; j < num_nodes[l + 1]; ++j) {
-			for (int i = 0; i < num_nodes[l]; ++i) {
-				emlp_init(emlp_weight[l][j][i], emlp_bias[l][j][i]);
-			}
-		}
-	}
-
-}
-
-void mikan_forward(
+double mikan_forward2(
 	double x[DIM],
 	int num_nodes[KAN_NUM_LAYERS],
 	double wb[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double ws[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
+	int emlp_num_nodes[EMLP_NUM_LAYERS],
 	double emlp_weight[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES],
 	double emlp_bias[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES],
 	double emlp_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS][EMLP_MAX_NODES],
 	double out[KAN_NUM_LAYERS][KAN_MAX_NODES],
 	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],
+	double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double mean[KAN_NUM_LAYERS],
 	double var[KAN_NUM_LAYERS]
 ) {
@@ -71,11 +31,10 @@ void mikan_forward(
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			out[l + 1][j] = 0;
 			for (int i = 0; i < num_nodes[l]; ++i) {
-				emlpk_forward(out[l][i], emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i]);
-				double res = emlp_out[l][j][i][EMLP_NUM_LAYERS - 1][0];
+				spline_out[l][j][i] = emlp_forward(out[l][i], emlp_num_nodes, emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i]);
 
-				if (NO_WEIGHT_AND_BASIS) out[l + 1][j] += res;
-				else out[l + 1][j] += wb[l][j][i] * silu_out[l][i] + ws[l][j][i] * res;
+				if (NO_WEIGHT_AND_BASIS) out[l + 1][j] += spline_out[l][j][i];
+				else out[l + 1][j] += wb[l][j][i] * silu_out[l][i] + ws[l][j][i] * spline_out[l][j][i];
 			}
 		}
 
@@ -89,11 +48,12 @@ void mikan_forward(
 
 }
 
-void mikan_backprop(
+double mikan_backprop2(
 	bool t[NUM_CLASSES],
 	int num_nodes[KAN_NUM_LAYERS],
 	double wb[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double ws[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
+	int emlp_num_nodes[EMLP_NUM_LAYERS],
 	double emlp_weight[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES],
 	double emlp_bias[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES],
 	double emlp_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS][EMLP_MAX_NODES],
@@ -101,6 +61,7 @@ void mikan_backprop(
 	double out[KAN_NUM_LAYERS][KAN_MAX_NODES],
 	double delta[KAN_NUM_LAYERS][KAN_MAX_NODES],
 	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],
+	double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double mean[KAN_NUM_LAYERS],
 	double var[KAN_NUM_LAYERS]
 ) {
@@ -121,12 +82,13 @@ void mikan_backprop(
 			delta[l][i] = 0;
 			const double sig_out = sigmoid(out[l][i]);
 			const double dsilu = sig_out + out[l][i] * sig_out * (1 - sig_out);
+			//const double dsilu = 1;
 			for (int j = 0; j < num_nodes[l + 1]; ++j) {
-				emlpk_backprop(delta[l + 1][j], emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i], emlp_delta[l][j][i]);
-				double d = emlp_delta[l][j][i][0][0];
+				const double dspline = emlp_backprop(delta[l + 1][j], emlp_num_nodes, emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i], emlp_delta[l][j][i]);
+				//const double dspline = 1;
 
-				if (NO_WEIGHT_AND_BASIS) delta[l][i] += d * delta[l + 1][j];
-				delta[l][i] += (wb[l][j][i] * dsilu + ws[l][j][i] * d) * delta[l + 1][j];
+				if (NO_WEIGHT_AND_BASIS) delta[l][i] += dspline * delta[l + 1][j];
+				delta[l][i] += (wb[l][j][i] * dsilu + ws[l][j][i] * dspline) * delta[l + 1][j];
 			}
 		}
 	}
@@ -137,7 +99,7 @@ void mikan_backprop(
 			for (int j = 0; j < num_nodes[l + 1]; ++j) {
 				for (int i = 0; i < num_nodes[l]; ++i) {
 					wb[l][j][i] -= KAN_LR * (delta[l + 1][j] * silu_out[l][i]);
-					ws[l][j][i] -= KAN_LR * (delta[l + 1][j] * emlp_out[l][j][i][EMLP_NUM_LAYERS - 1][0]);
+					ws[l][j][i] -= KAN_LR * (delta[l + 1][j] * spline_out[l][j][i]);
 				}
 			}
 		}

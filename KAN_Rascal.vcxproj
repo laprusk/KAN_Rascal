@@ -135,6 +135,7 @@
     <ClCompile Include="kan_fuction.c" />
     <ClCompile Include="main.c" />
     <ClCompile Include="mikan.c" />
+    <ClCompile Include="mikan2.c" />
     <ClCompile Include="mlp.c" />
     <ClCompile Include="util.c" />
   </ItemGroup>
@@ -146,6 +147,7 @@
     <ClInclude Include="kan_function.h" />
     <ClInclude Include="edge_mlp.h" />
     <ClInclude Include="mikan.h" />
+    <ClInclude Include="mikan2.h" />
     <ClInclude Include="mlp.h" />
     <ClInclude Include="util.h" />
   </ItemGroup>
