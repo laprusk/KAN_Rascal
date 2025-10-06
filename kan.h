@@ -9,12 +9,12 @@
 #define SPLINE_ORDER 3
 #define NUM_CP (GRID_SIZE + SPLINE_ORDER)
 #define NUM_KNOTS (GRID_SIZE + 1 + SPLINE_ORDER * 2)
-#define GRID_MIN -2.0
-#define GRID_MAX 2.0
-#define KAN_LR 0.005
+#define GRID_MIN -1.0
+#define GRID_MAX 1.0
+#define KAN_LR 0.01
 
 // 動作定義
-#define NO_WEIGHT_AND_BASIS 1			// SiLU基底関数と線形重みを使用しない
+#define NO_WEIGHT_AND_BASIS 0			// SiLU基底関数と線形重みを使用しない
 #define LAYER_NORM 0
 
 typedef enum {

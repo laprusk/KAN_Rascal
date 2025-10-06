@@ -16,7 +16,7 @@ void emlp_init(
 	int l;
 
 	// ノード数配列を作成
-	int num_nodes[EMLP_NUM_LAYERS] = { EMLP_K, EMLP_D, 1 };
+	int num_nodes[EMLP_NUM_LAYERS] = { 1, EMLP_D, 1 };
 
 	// hidden layer
 	for (l = 0; l < EMLP_NUM_LAYERS - 2; ++l) {
@@ -44,7 +44,6 @@ void emlp_init(
 
 double emlp_forward(
 	double x,
-	int num_nodes[EMLP_NUM_LAYERS],
 	double weight[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES],
 	double bias[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES],
 	double out[EMLP_NUM_LAYERS][EMLP_MAX_NODES]
@@ -53,6 +52,9 @@ double emlp_forward(
 
 	// 入力を0層の出力へコピー
 	out[0][0] = x;
+
+	// ノード数配列を作成
+	int num_nodes[EMLP_NUM_LAYERS] = { 1, EMLP_D, 1 };
 
 	// forward
 	for (l = 1; l < EMLP_NUM_LAYERS; ++l) {
@@ -73,7 +75,6 @@ double emlp_forward(
 
 double emlp_backprop(
 	double kan_delta,
-	int num_nodes[EMLP_NUM_LAYERS],
 	double weight[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES],
 	double bias[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES],
 	double out[EMLP_NUM_LAYERS][EMLP_MAX_NODES],
@@ -84,6 +85,9 @@ double emlp_backprop(
 
 	// 最終層のデルタ
 	delta[EMLP_NUM_LAYERS - 1][0] = kan_delta;
+
+	// ノード数配列を作成
+	int num_nodes[EMLP_NUM_LAYERS] = { 1, EMLP_D, 1 };
 
 	// backward
 	for (l = EMLP_NUM_LAYERS - 2; l >= 0; --l) {
@@ -108,6 +112,38 @@ double emlp_backprop(
 	}
 
 	return delta[0][0];
+}
+
+void emlpk_init(
+	double weight[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES],
+	double bias[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES]
+) {
+	int l;
+
+	// ノード数配列を作成
+	int num_nodes[EMLP_NUM_LAYERS] = { EMLP_K, EMLP_D, 1 };
+
+	// hidden layer
+	for (l = 0; l < EMLP_NUM_LAYERS - 2; ++l) {
+		// He初期化
+		double he_wp = 2 * sqrt(6.0 / num_nodes[l]);
+		for (int j = 0; j < num_nodes[l + 1]; ++j) {
+			bias[l][j] = 0;
+			for (int i = 0; i < num_nodes[l]; ++i) {
+				weight[l][j][i] = ((double)rand() / RAND_MAX - 0.5) * he_wp;
+				//woi[l][j][i] = randn() / sqrt(NodeN[l] / 2);
+			}
+		}
+	}
+
+	// output layer
+	for (int j = 0; j < num_nodes[l + 1]; ++j) {
+		bias[l][j] = 0;
+		for (int i = 0; i < num_nodes[l]; ++i) {
+			weight[l][j][i] = (double)rand() / (RAND_MAX)-0.5;
+		}
+	}
+
 }
 
 double emlpk_forward(

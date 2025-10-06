@@ -1,4 +1,5 @@
 #include "mikan.h"
+#include <math.h>
 #include <stdlib.h>
 
 
@@ -71,7 +72,7 @@ void mikan_forward(
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			out[l + 1][j] = 0;
 			for (int i = 0; i < num_nodes[l]; ++i) {
-				emlpk_forward(out[l][i], emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i]);
+				emlp_forward(out[l][i], emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i]);
 				double res = emlp_out[l][j][i][EMLP_NUM_LAYERS - 1][0];
 
 				if (NO_WEIGHT_AND_BASIS) out[l + 1][j] += res;
@@ -122,7 +123,7 @@ void mikan_backprop(
 			const double sig_out = sigmoid(out[l][i]);
 			const double dsilu = sig_out + out[l][i] * sig_out * (1 - sig_out);
 			for (int j = 0; j < num_nodes[l + 1]; ++j) {
-				emlpk_backprop(delta[l + 1][j], emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i], emlp_delta[l][j][i]);
+				emlp_backprop(delta[l + 1][j], emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i], emlp_delta[l][j][i]);
 				double d = emlp_delta[l][j][i][0][0];
 
 				if (NO_WEIGHT_AND_BASIS) delta[l][i] += d * delta[l + 1][j];
@@ -137,7 +138,7 @@ void mikan_backprop(
 			for (int j = 0; j < num_nodes[l + 1]; ++j) {
 				for (int i = 0; i < num_nodes[l]; ++i) {
 					wb[l][j][i] -= KAN_LR * (delta[l + 1][j] * silu_out[l][i]);
-					ws[l][j][i] -= KAN_LR * (delta[l + 1][j] * emlp_out[l][j][i][EMLP_NUM_LAYERS - 1][0]);
+					//ws[l][j][i] -= KAN_LR * (delta[l + 1][j] * emlp_out[l][j][i][EMLP_NUM_LAYERS - 1][0]);
 				}
 			}
 		}

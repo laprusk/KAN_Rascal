@@ -31,7 +31,7 @@ double mikan_forward2(
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			out[l + 1][j] = 0;
 			for (int i = 0; i < num_nodes[l]; ++i) {
-				spline_out[l][j][i] = emlp_forward(out[l][i], emlp_num_nodes, emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i]);
+				spline_out[l][j][i] = emlp_forward(out[l][i], emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i]);
 
 				if (NO_WEIGHT_AND_BASIS) out[l + 1][j] += spline_out[l][j][i];
 				else out[l + 1][j] += wb[l][j][i] * silu_out[l][i] + ws[l][j][i] * spline_out[l][j][i];
@@ -84,7 +84,7 @@ double mikan_backprop2(
 			const double dsilu = sig_out + out[l][i] * sig_out * (1 - sig_out);
 			//const double dsilu = 1;
 			for (int j = 0; j < num_nodes[l + 1]; ++j) {
-				const double dspline = emlp_backprop(delta[l + 1][j], emlp_num_nodes, emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i], emlp_delta[l][j][i]);
+				const double dspline = emlp_backprop(delta[l + 1][j], emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i], emlp_delta[l][j][i]);
 				//const double dspline = 1;
 
 				if (NO_WEIGHT_AND_BASIS) delta[l][i] += dspline * delta[l + 1][j];

@@ -17,7 +17,7 @@ const bool CNN = 0;
 
 
 // MLP
-int mlp_num_nodes[MLP_NUM_LAYERS] = {MLP_INPUT_DIM, 64, NUM_CLASSES};
+int mlp_num_nodes[MLP_NUM_LAYERS] = {MLP_INPUT_DIM, 100, NUM_CLASSES};
 const Activation HIDDEN_ACTIVATION = RELU;
 const Activation OUTPUT_ACTIVATION = SOFTMAX;
 double mlp_weight[MLP_NUM_LAYERS - 1][MLP_MAX_NODES][MLP_MAX_NODES];
@@ -282,7 +282,7 @@ void train_mikan() {
 int main() {
 
 	// 乱数初期化
-	//srand((unsigned int)time(NULL));
+	srand((unsigned int)time(NULL));
 	//srand(3);
 	
 	// データセット読み込み
