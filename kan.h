@@ -47,7 +47,7 @@ void kan_forward(
 	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],
 	double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double basis_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP],
-	double bnet[KAN_MAX_NODES],
+	double bnet[KAN_NUM_LAYERS][KAN_MAX_NODES],
 	double mean[KAN_NUM_LAYERS],
 	double var[KAN_NUM_LAYERS],
 	KANFunction func_type
@@ -66,7 +66,7 @@ void kan_backprop(
 	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],
 	double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double basis_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP],
-	double bnet[KAN_MAX_NODES],
+	double bnet[KAN_NUM_LAYERS][KAN_MAX_NODES],
 	double mean[KAN_NUM_LAYERS],
 	double var[KAN_NUM_LAYERS],
 	KANFunction func_type

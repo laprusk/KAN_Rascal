@@ -45,7 +45,7 @@ double cnn_dbias[NUM_SEGMENTS][COUNT_CONV][MAX_CH];
 
 // KAN
 const KANFunction func_type = GRBF;
-int kan_num_nodes[KAN_NUM_LAYERS] = { KAN_INPUT_DIM, 64, NUM_CLASSES };
+int kan_num_nodes[KAN_NUM_LAYERS] = { KAN_INPUT_DIM, 128, NUM_CLASSES };
 double knots[NUM_KNOTS];
 double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP];
 double wb[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES];
