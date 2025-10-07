@@ -104,6 +104,7 @@ void kan_forward(
 	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],
 	double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double basis_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP],
+	double bnet[KAN_MAX_NODES],
 	double mean[KAN_NUM_LAYERS],
 	double var[KAN_NUM_LAYERS],
 	KANFunction func_type
@@ -129,7 +130,7 @@ void kan_forward(
 		}
 
 		// Layer Norm
-		if (LAYER_NORM) kan_layer_norm_forward(num_nodes[l + 1], out[l + 1], &mean[l + 1], &var[l + 1]);
+		if (LAYER_NORM) kan_layer_norm_forward(num_nodes[l + 1], out[l + 1], bnet, &mean[l + 1], &var[l + 1]);
 	}
 
 	// ÅI‘w‚Åsoftmax
@@ -153,6 +154,7 @@ void kan_backprop(
 	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],
 	double spline_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES],
 	double basis_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][NUM_CP],
+	double bnet[KAN_MAX_NODES],
 	double mean[KAN_NUM_LAYERS],
 	double var[KAN_NUM_LAYERS],
 	KANFunction func_type
@@ -168,7 +170,7 @@ void kan_backprop(
 	// hidden layer
 	for (int l = KAN_NUM_LAYERS - 2; l > 0; --l) {
 		// Layer Norm
-		if (LAYER_NORM) kan_layer_norm_backprop(num_nodes[l + 1], out[l + 1], delta[l + 1], mean[l + 1], var[l + 1]);
+		if (LAYER_NORM) kan_layer_norm_backprop(num_nodes[l + 1], out[l + 1], bnet, delta[l + 1], mean[l + 1], var[l + 1]);
 
 		for (int i = 0; i < num_nodes[l]; ++i) {
 			delta[l][i] = 0;
@@ -215,9 +217,13 @@ void kan_backprop(
 void kan_layer_norm_forward(
 	int num_nodes,
 	double out[KAN_MAX_NODES],
+	double bnet[KAN_MAX_NODES],
 	double *mean,
 	double *var
 ) {
+
+	// save vals before norm
+	for (int i = 0; i < num_nodes; ++i) bnet[i] = out[i];
 
 	// mean
 	double sum = 0;
@@ -244,6 +250,7 @@ void kan_layer_norm_forward(
 void kan_layer_norm_backprop(
 	int num_nodes,
 	double out[KAN_MAX_NODES],
+	double bnet[KAN_MAX_NODES],
 	double delta[KAN_MAX_NODES],
 	double mean,
 	double var
@@ -254,12 +261,14 @@ void kan_layer_norm_backprop(
 	// var
 	double dvar = 0;
 	for (int i = 0; i < num_nodes; ++i) {
+		//dvar += delta[i] * (bnet[i] - mean) * (-0.5) * pow(var + EPS, -1.5);
 		dvar += delta[i] * (out[i] - mean) * (-0.5) * pow(var + EPS, -1.5);
 	}
 
 	// mean
 	double dmean = 0;
 	for (int i = 0; i < num_nodes; ++i) {
+		//dmean += -2 * (bnet[i] - mean);
 		dmean += -2 * (out[i] - mean);
 	}
 	dmean *= dvar / num_nodes;
@@ -268,6 +277,7 @@ void kan_layer_norm_backprop(
 	}
 
 	for (int i = 0; i < num_nodes; ++i) {
+		//delta[i] = delta[i] * inv_std + dvar * 2 * (bnet[i] - mean) / num_nodes + dmean / num_nodes;
 		delta[i] = delta[i] * inv_std + dvar * 2 * (out[i] - mean) / num_nodes + dmean / num_nodes;
 	}
 

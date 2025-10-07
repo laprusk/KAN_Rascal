@@ -39,7 +39,7 @@ double mikan_forward2(
 		}
 
 		// Layer Norm
-		if (LAYER_NORM) kan_layer_norm_forward(num_nodes[l + 1], out[l + 1], &mean[l + 1], &var[l + 1]);
+		//if (LAYER_NORM) kan_layer_norm_forward(num_nodes[l + 1], out[l + 1], &mean[l + 1], &var[l + 1]);
 	}
 
 	// ÅI‘w‚Åsoftmax
@@ -76,7 +76,7 @@ double mikan_backprop2(
 	// hidden layer
 	for (int l = KAN_NUM_LAYERS - 2; l > 0; --l) {
 		// Layer Norm
-		if (LAYER_NORM) kan_layer_norm_backprop(num_nodes[l + 1], out[l + 1], delta[l + 1], mean[l + 1], var[l + 1]);
+		//if (LAYER_NORM) kan_layer_norm_backprop(num_nodes[l + 1], out[l + 1], delta[l + 1], mean[l + 1], var[l + 1]);
 
 		for (int i = 0; i < num_nodes[l]; ++i) {
 			delta[l][i] = 0;
