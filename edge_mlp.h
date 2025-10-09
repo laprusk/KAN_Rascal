@@ -6,7 +6,7 @@
 #define EMLP_K 1
 #define EMLP_NUM_LAYERS 3
 #define EMLP_MAX_NODES EMLP_D
-#define EMLPS_BOUND 0.5
+#define EMLPS_BOUND 0.6
 
 void emlp_init(
 	double weight[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES],

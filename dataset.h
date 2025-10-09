@@ -28,10 +28,10 @@ static const char* test_file_name = "optdigits_tes.csv";
 #define CHANNEL 1
 #define DIM (HEIGHT * WIDTH * CHANNEL)
 #define NUM_CLASSES 10
-//#define NUM_TRAINS 60000
-//#define NUM_TESTS 10000
-#define NUM_TRAINS 4000
-#define NUM_TESTS 2000
+#define NUM_TRAINS 60000
+#define NUM_TESTS 10000
+//#define NUM_TRAINS 4000
+//#define NUM_TESTS 2000
 static const double MAXV = 255.0;
 static const char* train_file_name = "dataset_mnist_train.csv";
 static const char* test_file_name = "dataset_mnist_test.csv";

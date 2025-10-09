@@ -365,3 +365,6 @@ FodyWeavers.xsd
 # dataset
 dataset_mnist_test.csv
 dataset_mnist_train.csv
+
+# results
+results/*

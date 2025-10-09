@@ -241,7 +241,9 @@ void emlps_init(
 	// hidden layer
 	for (l = 0; l < EMLP_NUM_LAYERS - 2; ++l) {
 		// He‰Šú‰»
-		double he_wp = 2 * sqrt(6.0 / num_nodes[l]);
+		double num_nodes_cur = num_nodes[l];
+		if (l == 0) num_nodes_cur = 1;
+		double he_wp = 2 * sqrt(6.0 / num_nodes_cur);
 		for (int j = 0; j < num_nodes[l + 1]; ++j) {
 			bias[l][j] = 0;
 			for (int i = 0; i < num_nodes[l]; ++i) {
@@ -277,7 +279,8 @@ double emlps_forward(
 		out[0][i] = 0;
 	}
 	if (x < -EMLPS_BOUND) out[0][0] = x;
-	else if (x < EMLPS_BOUND) out[0][1] = x;
+	else if (x < 0) out[0][1] = x;
+	else if (x < EMLPS_BOUND) out[0][2] = x;
 	else out[0][2] = x;
 
 	// forward

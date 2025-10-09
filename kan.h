@@ -5,7 +5,7 @@
 #define KAN_NUM_LAYERS 3
 #define KAN_INPUT_DIM DIM
 #define KAN_MAX_NODES DIM
-#define GRID_SIZE 5
+#define GRID_SIZE 10
 #define SPLINE_ORDER 3
 #define NUM_CP (GRID_SIZE + SPLINE_ORDER)
 #define NUM_KNOTS (GRID_SIZE + 1 + SPLINE_ORDER * 2)
@@ -14,7 +14,7 @@
 #define KAN_LR 0.005
 
 // 動作定義
-#define NO_WEIGHT_AND_BASIS 0			// SiLU基底関数と線形重みを使用しない
+#define NO_WEIGHT_AND_BASIS 1			// SiLU基底関数と線形重みを使用しない
 #define LAYER_NORM 1
 
 typedef enum {

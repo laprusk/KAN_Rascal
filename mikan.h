@@ -4,7 +4,7 @@
 #include "edge_mlp.h"
 
 // 0: EdgeMLP, 1: EdgeMLP-k, 2: EdgeMLP-spline
-#define KANTYPE 2
+#define KANTYPE 0
 
 void mikan_init(
 	int num_nodes[KAN_NUM_LAYERS],

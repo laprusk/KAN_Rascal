@@ -283,3 +283,68 @@ void kan_layer_norm_backprop(
 	}
 
 }
+
+void kan_layer_norm_forward_(
+	int num_nodes,
+	double out[KAN_MAX_NODES],
+	double bnet[KAN_MAX_NODES],
+	double* mean,
+	double* var
+) {
+
+	// mean
+	double sum = 0;
+	for (int i = 0; i < num_nodes; ++i) {
+		sum += out[i];
+	}
+	*mean = sum / num_nodes;
+
+	// var
+	sum = 0;
+	for (int i = 0; i < num_nodes; ++i) {
+		sum += (out[i] - *mean) * (out[i] - *mean);
+	}
+	*var = sum / num_nodes;
+
+	// normalize
+	for (int i = 0; i < num_nodes; ++i) {
+		out[i] = (out[i] - *mean) / sqrt(*var + EPS);
+	}
+
+
+}
+
+
+void kan_layer_norm_backprop_(
+	int num_nodes,
+	double out[KAN_MAX_NODES],
+	double bnet[KAN_MAX_NODES],
+	double delta[KAN_MAX_NODES],
+	double mean,
+	double var
+) {
+
+	double inv_std = 1 / sqrt(var + EPS);
+
+	// var
+	double dvar = 0;
+	for (int i = 0; i < num_nodes; ++i) {
+		dvar += delta[i] * (out[i] - mean) * (-0.5) * pow(var + EPS, -1.5);
+	}
+
+	// mean
+	double dmean = 0;
+	for (int i = 0; i < num_nodes; ++i) {
+		dmean += -2 * (out[i] - mean);
+	}
+	dmean *= dvar / num_nodes;
+	for (int i = 0; i < num_nodes; ++i) {
+		dmean += delta[i] * (-inv_std);
+	}
+
+	for (int i = 0; i < num_nodes; ++i) {
+		delta[i] = delta[i] * inv_std + dvar * 2 * (out[i] - mean) / num_nodes + dmean / num_nodes;
+	}
+
+
+}
