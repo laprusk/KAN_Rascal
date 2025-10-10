@@ -130,8 +130,7 @@ void kan_forward(
 		}
 
 		// Layer Norm
-		//if (l < KAN_NUM_LAYERS - 2 && LAYER_NORM) kan_layer_norm_forward(num_nodes[l + 1], out[l + 1], bnet[l + 1], &mean[l + 1], &var[l + 1]);
-		if (LAYER_NORM) kan_layer_norm_forward(num_nodes[l + 1], out[l + 1], bnet[l + 1], &mean[l + 1], &var[l + 1]);
+		if (l < KAN_NUM_LAYERS - 2 && LAYER_NORM) kan_layer_norm_forward(num_nodes[l + 1], out[l + 1], bnet[l + 1], &mean[l + 1], &var[l + 1]);
 	}
 
 	// ÅI‘w‚Åsoftmax
@@ -170,9 +169,6 @@ void kan_backprop(
 
 	// hidden layer
 	for (int l = KAN_NUM_LAYERS - 2; l > 0; --l) {
-		// Layer Norm
-		if (LAYER_NORM) kan_layer_norm_backprop(num_nodes[l + 1], out[l + 1], bnet[l + 1], delta[l + 1], mean[l + 1], var[l + 1]);
-
 		for (int i = 0; i < num_nodes[l]; ++i) {
 			delta[l][i] = 0;
 			const double sig_out = sigmoid(out[l][i]);
@@ -186,6 +182,9 @@ void kan_backprop(
 				delta[l][i] += (wb[l][j][i] * dsilu + ws[l][j][i] * dspline) * delta[l + 1][j];
 			}
 		}
+
+		// Layer Norm
+		if (LAYER_NORM) kan_layer_norm_backprop(num_nodes[l + 1], out[l + 1], bnet[l + 1], delta[l + 1], mean[l + 1], var[l + 1]);
 	}
 
 	// update spline coefficient

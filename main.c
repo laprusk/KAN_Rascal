@@ -12,7 +12,7 @@
 
 
 // íËêî
-const int EPOCH_MAX = 50;
+const int EPOCH_MAX = 20;
 const bool CNN = 0;
 
 
@@ -45,7 +45,7 @@ double mlp_delta[MLP_NUM_LAYERS][MLP_MAX_NODES];
 
 // KAN
 const KANFunction func_type = GRBF;
-int kan_num_nodes[KAN_NUM_LAYERS] = { KAN_INPUT_DIM, 128, NUM_CLASSES };
+int kan_num_nodes[KAN_NUM_LAYERS] = { KAN_INPUT_DIM, 64, NUM_CLASSES };
 double knots[NUM_KNOTS];
 double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP];
 double wb[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES];
@@ -330,8 +330,8 @@ int main() {
 	printf("Finish loading dataset!\n\n");
 
 	//train_mlp();
-	train_kan();
-	//train_mikan();
+	//train_kan();
+	train_mikan();
 
 	return 0;
 }
