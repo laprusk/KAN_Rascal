@@ -6,7 +6,7 @@
 #define MNIST 1
 
 #define DATASET OPTDIGIT
-//#define DATASET MNIST
+#define DATASET MNIST
 
 #if DATASET == OPTDIGIT
 

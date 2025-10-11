@@ -184,7 +184,7 @@ void kan_backprop(
 		}
 
 		// Layer Norm
-		if (LAYER_NORM) kan_layer_norm_backprop(num_nodes[l + 1], out[l + 1], bnet[l + 1], delta[l + 1], mean[l + 1], var[l + 1]);
+		if (LAYER_NORM) kan_layer_norm_backprop(num_nodes[l], out[l], bnet[l], delta[l], mean[l], var[l]);
 	}
 
 	// update spline coefficient

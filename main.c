@@ -17,14 +17,14 @@ const bool CNN = 0;
 
 
 // MLP
-int mlp_num_nodes[MLP_NUM_LAYERS] = {MLP_INPUT_DIM, 100, NUM_CLASSES};
-const Activation HIDDEN_ACTIVATION = RELU;
-const Activation OUTPUT_ACTIVATION = SOFTMAX;
-double mlp_weight[MLP_NUM_LAYERS - 1][MLP_MAX_NODES][MLP_MAX_NODES];
-double mlp_bias[MLP_NUM_LAYERS - 1][MLP_MAX_NODES];
-// online
-double mlp_out[MLP_NUM_LAYERS][MLP_MAX_NODES];
-double mlp_delta[MLP_NUM_LAYERS][MLP_MAX_NODES];
+//int mlp_num_nodes[MLP_NUM_LAYERS] = {MLP_INPUT_DIM, 100, NUM_CLASSES};
+//const Activation HIDDEN_ACTIVATION = RELU;
+//const Activation OUTPUT_ACTIVATION = SOFTMAX;
+//double mlp_weight[MLP_NUM_LAYERS - 1][MLP_MAX_NODES][MLP_MAX_NODES];
+//double mlp_bias[MLP_NUM_LAYERS - 1][MLP_MAX_NODES];
+//// online
+//double mlp_out[MLP_NUM_LAYERS][MLP_MAX_NODES];
+//double mlp_delta[MLP_NUM_LAYERS][MLP_MAX_NODES];
 // mini-batch
 
 
@@ -81,81 +81,81 @@ int train_label[NUM_TRAINS];
 int test_label[NUM_TESTS];
 
 
-void train_mlp() {
-
-	double x[DIM];
-	bool tk[NUM_CLASSES];
-	int train_order[NUM_TRAINS];
-
-	if (CNN) printf("train CNN...\n\n");
-	else printf("train MLP...\n\n");
-
-	// init weight
-	mlp_init(mlp_num_nodes, mlp_weight, mlp_bias, HIDDEN_ACTIVATION);
-	//if (CNN) cnn_init(num_ch, cnn_weight, cnn_bias);
-
-	// train loop
-	for (int ep = 0; ep < EPOCH_MAX; ++ep) {
-		// shuffle dataset order
-		for (int i = 0; i < NUM_TRAINS; ++i) train_order[i] = i;
-		shuffle(train_order, NUM_TRAINS);
-
-		// train
-		for (int t = 0; t < NUM_TRAINS; ++t) {
-			// make input & label
-			int i = train_order[t];
-			memcpy(x, train_data[i], sizeof(train_data[i]));
-			convert_one_hot(train_label[i], tk);
-
-			// forward & backprop
-			//if (CNN) cnn_forward(x, num_ch, cnn_weight, cnn_bias, cnn_out, x);
-			mlp_forward(
-				x, mlp_num_nodes, mlp_weight, mlp_bias, mlp_out,
-				HIDDEN_ACTIVATION, OUTPUT_ACTIVATION
-			);
-			mlp_backprop(
-				tk, mlp_num_nodes, mlp_weight, mlp_bias, mlp_out, mlp_delta,
-				HIDDEN_ACTIVATION, OUTPUT_ACTIVATION, CNN
-			);
-			/*if (CNN) cnn_backprop(
-				mlp_delta[0], num_ch, cnn_weight, cnn_bias, cnn_out, cnn_delta, cnn_dweight, cnn_dbias
-			);*/
-		}
-
-		// evaluate test
-		int count = 0;
-		for (int t = 0; t < NUM_TESTS; ++t) {
-			int i = t;
-			memcpy(x, test_data[i], sizeof(test_data[i]));
-
-			// forward only
-			//if (CNN) cnn_forward(x, num_ch, cnn_weight, cnn_bias, cnn_out, x);
-			mlp_forward(
-				x, mlp_num_nodes, mlp_weight, mlp_bias, mlp_out,
-				HIDDEN_ACTIVATION, OUTPUT_ACTIVATION
-			);
-			if (mlp_is_collect(mlp_out[MLP_NUM_LAYERS - 1], test_label[i])) ++count;
-		}
-		printf("Epoch %d: %.3f\n", ep, (double)count / NUM_TESTS);
-	}
-
-	// evaluate train
-	int count = 0;
-	for (int t = 0; t < NUM_TRAINS; ++t) {
-		int i = t;
-		memcpy(x, train_data[i], sizeof(train_data[i]));
-
-		// forward only
-		//if (CNN) cnn_forward(x, num_ch, cnn_weight, cnn_bias, cnn_out, x);
-		mlp_forward(
-			x, mlp_num_nodes, mlp_weight, mlp_bias, mlp_out,
-			HIDDEN_ACTIVATION, OUTPUT_ACTIVATION
-		);
-		if (mlp_is_collect(mlp_out[MLP_NUM_LAYERS - 1], train_label[i])) ++count;
-	}
-	printf("Train: %.3f\n\n", (double)count / NUM_TRAINS);
-
-}
+//void train_mlp() {
+//
+//	double x[DIM];
+//	bool tk[NUM_CLASSES];
+//	int train_order[NUM_TRAINS];
+//
+//	if (CNN) printf("train CNN...\n\n");
+//	else printf("train MLP...\n\n");
+//
+//	// init weight
+//	mlp_init(mlp_num_nodes, mlp_weight, mlp_bias, HIDDEN_ACTIVATION);
+//	//if (CNN) cnn_init(num_ch, cnn_weight, cnn_bias);
+//
+//	// train loop
+//	for (int ep = 0; ep < EPOCH_MAX; ++ep) {
+//		// shuffle dataset order
+//		for (int i = 0; i < NUM_TRAINS; ++i) train_order[i] = i;
+//		shuffle(train_order, NUM_TRAINS);
+//
+//		// train
+//		for (int t = 0; t < NUM_TRAINS; ++t) {
+//			// make input & label
+//			int i = train_order[t];
+//			memcpy(x, train_data[i], sizeof(train_data[i]));
+//			convert_one_hot(train_label[i], tk);
+//
+//			// forward & backprop
+//			//if (CNN) cnn_forward(x, num_ch, cnn_weight, cnn_bias, cnn_out, x);
+//			mlp_forward(
+//				x, mlp_num_nodes, mlp_weight, mlp_bias, mlp_out,
+//				HIDDEN_ACTIVATION, OUTPUT_ACTIVATION
+//			);
+//			mlp_backprop(
+//				tk, mlp_num_nodes, mlp_weight, mlp_bias, mlp_out, mlp_delta,
+//				HIDDEN_ACTIVATION, OUTPUT_ACTIVATION, CNN
+//			);
+//			/*if (CNN) cnn_backprop(
+//				mlp_delta[0], num_ch, cnn_weight, cnn_bias, cnn_out, cnn_delta, cnn_dweight, cnn_dbias
+//			);*/
+//		}
+//
+//		// evaluate test
+//		int count = 0;
+//		for (int t = 0; t < NUM_TESTS; ++t) {
+//			int i = t;
+//			memcpy(x, test_data[i], sizeof(test_data[i]));
+//
+//			// forward only
+//			//if (CNN) cnn_forward(x, num_ch, cnn_weight, cnn_bias, cnn_out, x);
+//			mlp_forward(
+//				x, mlp_num_nodes, mlp_weight, mlp_bias, mlp_out,
+//				HIDDEN_ACTIVATION, OUTPUT_ACTIVATION
+//			);
+//			if (mlp_is_collect(mlp_out[MLP_NUM_LAYERS - 1], test_label[i])) ++count;
+//		}
+//		printf("Epoch %d: %.3f\n", ep, (double)count / NUM_TESTS);
+//	}
+//
+//	// evaluate train
+//	int count = 0;
+//	for (int t = 0; t < NUM_TRAINS; ++t) {
+//		int i = t;
+//		memcpy(x, train_data[i], sizeof(train_data[i]));
+//
+//		// forward only
+//		//if (CNN) cnn_forward(x, num_ch, cnn_weight, cnn_bias, cnn_out, x);
+//		mlp_forward(
+//			x, mlp_num_nodes, mlp_weight, mlp_bias, mlp_out,
+//			HIDDEN_ACTIVATION, OUTPUT_ACTIVATION
+//		);
+//		if (mlp_is_collect(mlp_out[MLP_NUM_LAYERS - 1], train_label[i])) ++count;
+//	}
+//	printf("Train: %.3f\n\n", (double)count / NUM_TRAINS);
+//
+//}
 
 void train_kan() {
 
@@ -210,13 +210,15 @@ void train_kan() {
 
 		// evaluate train
 		int train_count = 0;
-		for (int t = 0; t < NUM_TRAINS; ++t) {
-			int i = t;
-			memcpy(x, train_data[i], sizeof(train_data[i]));
+		if (ep == EPOCH_MAX - 1) {
+			for (int t = 0; t < NUM_TRAINS; ++t) {
+				int i = t;
+				memcpy(x, train_data[i], sizeof(train_data[i]));
 
-			// forward only
-			kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, PhaseLow, PhaseHeight, kan_out, silu_out, spline_out, basis_out, KanBNet, KanMean, KanVar, func_type);
-			if (mlp_is_collect(kan_out[KAN_NUM_LAYERS - 1], train_label[i])) ++train_count;
+				// forward only
+				kan_forward(x, kan_num_nodes, wb, ws, coeff, knots, PhaseLow, PhaseHeight, kan_out, silu_out, spline_out, basis_out, KanBNet, KanMean, KanVar, func_type);
+				if (mlp_is_collect(kan_out[KAN_NUM_LAYERS - 1], train_label[i])) ++train_count;
+			}
 		}
 
 		// evaluate test
@@ -234,7 +236,7 @@ void train_kan() {
 		double test_acc = (double)test_count / NUM_TESTS;
 
 		printf("Epoch %d (%.3fs)\n", ep, sec);
-		printf("Train: %.3f\n", train_acc);
+		//printf("Train: %.3f\n", train_acc);
 		printf("Test: %.3f\n\n", test_acc);
 
 		fprintf_s(fp, "%d,%.4lf,%.4lf,%.4lf\n", ep, train_acc, test_acc, sec);
@@ -331,7 +333,11 @@ int main() {
 
 	//train_mlp();
 	//train_kan();
-	train_mikan();
+	//train_mikan();
+
+	for (int i = 0; i < 8; ++i) {
+		train_kan();
+	}
 
 	return 0;
 }
