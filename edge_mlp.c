@@ -46,7 +46,8 @@ double emlp_forward(
 	double x,
 	double weight[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES],
 	double bias[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES],
-	double out[EMLP_NUM_LAYERS][EMLP_MAX_NODES]
+	double out[EMLP_NUM_LAYERS][EMLP_MAX_NODES],
+	double out_ba[EMLP_NUM_LAYERS][EMLP_MAX_NODES]
 ) {
 	int l;
 
@@ -65,7 +66,13 @@ double emlp_forward(
 			}
 			
 			// activation
-			if (l != EMLP_NUM_LAYERS - 1) out[l][j] = relu(out[l][j]);
+			//if (l != EMLP_NUM_LAYERS - 1) out[l][j] = relu(out[l][j]);
+			out_ba[l][j] = out[l][j];
+			if (l != EMLP_NUM_LAYERS - 1) {
+				if (ACTIVATION == RELU) out[l][j] = relu(out[l][j]);
+				else if (ACTIVATION == SILU) out[l][j] = silu(out[l][j]);
+				else if (ACTIVATION == SIGMOID) out[l][j] = sigmoid(out[l][j]);
+			}
 		}
 	}
 
@@ -78,6 +85,7 @@ double emlp_backprop(
 	double weight[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES],
 	double bias[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES],
 	double out[EMLP_NUM_LAYERS][EMLP_MAX_NODES],
+	double out_ba[EMLP_NUM_LAYERS][EMLP_MAX_NODES],
 	double delta[EMLP_NUM_LAYERS][EMLP_MAX_NODES]
 ) {
 
@@ -93,10 +101,23 @@ double emlp_backprop(
 	for (l = EMLP_NUM_LAYERS - 2; l >= 0; --l) {
 		for (int i = 0; i < num_nodes[l]; ++i) {
 			delta[l][i] = 0;
-			if (out[l][i] != 0 || l == 0) {			// 出力が0なら、活性化関数によらず誤差信号も0
-				for (int j = 0; j < num_nodes[l + 1]; ++j) {
-					delta[l][i] += delta[l + 1][j] * weight[l][j][i];
-				}
+			//if (out[l][i] != 0 || l == 0) {			// 出力が0なら、活性化関数によらず誤差信号も0
+			//	for (int j = 0; j < num_nodes[l + 1]; ++j) {
+			//		delta[l][i] += delta[l + 1][j] * weight[l][j][i];
+			//	}
+
+			//	if (ACTIVATION == RELU) delta[l][i] *= relu_derive(out_ba[l][i]);
+			//	else if (ACTIVATION == SILU) delta[l][i] *= silu_derive(out_ba[l][i]);
+			//	else if (ACTIVATION == SIGMOID) delta[l][i] *= sigmoid_derive(out_ba[l][i]);
+			//}
+
+			for (int j = 0; j < num_nodes[l + 1]; ++j) {
+				delta[l][i] += delta[l + 1][j] * weight[l][j][i];
+			}
+			if (l != 0) {
+				if (ACTIVATION == RELU) delta[l][i] *= relu_derive(out_ba[l][i]);
+				else if (ACTIVATION == SILU) delta[l][i] *= silu_derive(out_ba[l][i]);
+				else if (ACTIVATION == SIGMOID) delta[l][i] *= sigmoid_derive(out_ba[l][i]);
 			}
 		}
 	}

@@ -67,6 +67,7 @@ void mikan_forward(
 	double emlp_weight[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES],
 	double emlp_bias[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES],
 	double emlp_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS][EMLP_MAX_NODES],
+	double emlp_out_ba[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS][EMLP_MAX_NODES],
 	double out[KAN_NUM_LAYERS][KAN_MAX_NODES],
 	double silu_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES],
 	double bnet[KAN_NUM_LAYERS][KAN_MAX_NODES],
@@ -89,7 +90,7 @@ void mikan_forward(
 			out[l + 1][j] = 0;
 			for (int i = 0; i < num_nodes[l]; ++i) {
 				// EdgeMLP
-				if (KANTYPE == 0) emlp_forward(out[l][i], emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i]);
+				if (KANTYPE == 0) emlp_forward(out[l][i], emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i], emlp_out_ba[l][j][i]);
 				else if (KANTYPE == 1) emlpk_forward(out[l][i], emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i]);
 				else emlps_forward(out[l][i], emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i]);
 
@@ -118,6 +119,7 @@ void mikan_backprop(
 	double emlp_weight[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES],
 	double emlp_bias[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES],
 	double emlp_out[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS][EMLP_MAX_NODES],
+	double emlp_out_ba[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS][EMLP_MAX_NODES],
 	double emlp_delta[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS][EMLP_MAX_NODES],
 	double out[KAN_NUM_LAYERS][KAN_MAX_NODES],
 	double delta[KAN_NUM_LAYERS][KAN_MAX_NODES],
@@ -144,7 +146,7 @@ void mikan_backprop(
 			const double dsilu = sig_out + out[l][i] * sig_out * (1 - sig_out);
 			for (int j = 0; j < num_nodes[l + 1]; ++j) {
 				// EdgeMLP
-				if (KANTYPE == 0) emlp_backprop(delta[l + 1][j], emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i], emlp_delta[l][j][i]);
+				if (KANTYPE == 0) emlp_backprop(delta[l + 1][j], emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i], emlp_out_ba[l][j][i], emlp_delta[l][j][i]);
 				else if (KANTYPE == 1) emlpk_backprop(delta[l + 1][j], emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i], emlp_delta[l][j][i]);
 				else emlps_backprop(delta[l + 1][j], emlp_weight[l][j][i], emlp_bias[l][j][i], emlp_out[l][j][i], emlp_delta[l][j][i]);
 
@@ -156,8 +158,8 @@ void mikan_backprop(
 		}
 
 		// Layer Norm
-		if (LAYER_NORM) mikan_layer_norm_backprop(num_nodes[l + 1], out[l + 1], bnet[l + 1], delta[l + 1], mean[l + 1], var[l + 1], &beta[l + 1], &gamma[l + 1]);
-		//if (LAYER_NORM) kan_layer_norm_backprop(num_nodes[l + 1], out[l + 1], bnet[l + 1], delta[l + 1], mean[l + 1], var[l + 1]);
+		//if (LAYER_NORM) mikan_layer_norm_backprop(num_nodes[l], out[l], bnet[l], delta[l], mean[l], var[l], &beta[l], &gamma[l]);
+		if (LAYER_NORM) kan_layer_norm_backprop(num_nodes[l], out[l], bnet[l], delta[l], mean[l], var[l]);
 	}
 
 	if (!NO_WEIGHT_AND_BASIS) {
@@ -239,9 +241,9 @@ void mikan_layer_norm_backprop(
 	// mean
 	double dmean = 0;
 	for (int i = 0; i < num_nodes; ++i) {
-		dmean += -2 * (bnet[i] - mean);
+		dmean += bnet[i] - mean;
 	}
-	dmean *= dvar / num_nodes;
+	dmean *= -2 * dvar / num_nodes;
 	for (int i = 0; i < num_nodes; ++i) {
 		dmean += dxh[i] * (-inv_std);
 	}
@@ -260,7 +262,7 @@ void mikan_layer_norm_backprop(
 	}
 
 	// update beta, gamma
-	*beta += -KAN_LR * dbeta / num_nodes;
-	*gamma += -KAN_LR * dgamma / num_nodes;
+	//*beta -= KAN_LR * dbeta / num_nodes;
+	//*gamma -= KAN_LR * dgamma / num_nodes;
 
 }

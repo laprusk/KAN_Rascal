@@ -14,7 +14,7 @@
 #define KAN_LR 0.005
 
 // 動作定義
-#define NO_WEIGHT_AND_BASIS 0			// SiLU基底関数と線形重みを使用しない
+#define NO_WEIGHT_AND_BASIS 1			// SiLU基底関数と線形重みを使用しない
 #define LAYER_NORM 1
 
 typedef enum {

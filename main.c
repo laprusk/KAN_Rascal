@@ -45,7 +45,7 @@ const bool CNN = 0;
 
 // KAN
 const KANFunction func_type = GRBF;
-int kan_num_nodes[KAN_NUM_LAYERS] = { KAN_INPUT_DIM, 64, NUM_CLASSES };
+int kan_num_nodes[KAN_NUM_LAYERS] = { KAN_INPUT_DIM, 32, NUM_CLASSES };
 double knots[NUM_KNOTS];
 double coeff[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][NUM_CP];
 double wb[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES];
@@ -71,6 +71,7 @@ double EMLPWeight[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAY
 double EMLPBias[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES];
 // online
 double EMLPOut[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS][EMLP_MAX_NODES];
+double EMLPOutBA[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS][EMLP_MAX_NODES];
 double EMLPDelta[KAN_NUM_LAYERS - 1][KAN_MAX_NODES][KAN_MAX_NODES][EMLP_NUM_LAYERS][EMLP_MAX_NODES];
 
 
@@ -287,8 +288,8 @@ void train_mikan() {
 			convert_one_hot(train_label[i], tk);
 
 			// forward & backprop
-			mikan_forward(x, kan_num_nodes, wb, ws, EMLPWeight, EMLPBias, EMLPOut, kan_out, silu_out, KanBNet, KanMean, KanVar, KanBeta, KanGamma);
-			mikan_backprop(tk, kan_num_nodes, wb, ws, EMLPWeight, EMLPBias, EMLPOut, EMLPDelta, kan_out, kan_delta, silu_out, KanBNet, KanMean, KanVar, KanBeta, KanGamma);
+			mikan_forward(x, kan_num_nodes, wb, ws, EMLPWeight, EMLPBias, EMLPOut, EMLPOutBA, kan_out, silu_out, KanBNet, KanMean, KanVar, KanBeta, KanGamma);
+			mikan_backprop(tk, kan_num_nodes, wb, ws, EMLPWeight, EMLPBias, EMLPOut, EMLPOutBA, EMLPDelta, kan_out, kan_delta, silu_out, KanBNet, KanMean, KanVar, KanBeta, KanGamma);
 		}
 
 		// evaluate test
@@ -298,7 +299,7 @@ void train_mikan() {
 			memcpy(x, test_data[i], sizeof(test_data[i]));
 
 			// forward only
-			mikan_forward(x, kan_num_nodes, wb, ws, EMLPWeight, EMLPBias, EMLPOut, kan_out, silu_out, KanBNet, KanMean, KanVar, KanBeta, KanGamma);
+			mikan_forward(x, kan_num_nodes, wb, ws, EMLPWeight, EMLPBias, EMLPOut, EMLPOutBA, kan_out, silu_out, KanBNet, KanMean, KanVar, KanBeta, KanGamma);
 			if (mlp_is_collect(kan_out[KAN_NUM_LAYERS - 1], test_label[i])) ++count;
 		}
 		const double sec = (double)(clock() - start_clock) / CLOCKS_PER_SEC;
@@ -312,7 +313,7 @@ void train_mikan() {
 		memcpy(x, train_data[i], sizeof(train_data[i]));
 
 		// forward only
-		mikan_forward(x, kan_num_nodes, wb, ws, EMLPWeight, EMLPBias, EMLPOut, kan_out, silu_out, KanBNet, KanMean, KanVar, KanBeta, KanGamma);
+		mikan_forward(x, kan_num_nodes, wb, ws, EMLPWeight, EMLPBias, EMLPOut, EMLPOutBA, kan_out, silu_out, KanBNet, KanMean, KanVar, KanBeta, KanGamma);
 		if (mlp_is_collect(kan_out[KAN_NUM_LAYERS - 1], train_label[i])) ++count;
 	}
 	printf("Train: %.3f\n\n", (double)count / NUM_TRAINS);
@@ -333,11 +334,11 @@ int main() {
 
 	//train_mlp();
 	//train_kan();
-	//train_mikan();
+	train_mikan();
 
-	for (int i = 0; i < 8; ++i) {
+	/*for (int i = 0; i < 8; ++i) {
 		train_kan();
-	}
+	}*/
 
 	return 0;
 }

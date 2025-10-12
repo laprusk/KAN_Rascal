@@ -6,6 +6,10 @@ double sigmoid(double x) {
 	return 1 / (1 + exp(-x));
 }
 
+double sigmoid_derive(double x) {
+	double sigx = sigmoid(x);
+	return sigx * (1 - sigx);
+}
 
 double relu(double x) {
 	if (x <= 0) return 0;
@@ -19,6 +23,11 @@ double relu_derive(double x) {
 
 double silu(double x) {
 	return x / (1 + exp(-x));
+}
+
+double silu_derive(double x) {
+	double sigx = sigmoid(x);
+	return sigx + x * sigx * (1 - sigx);
 }
 
 void softmax(double* x, int n) {

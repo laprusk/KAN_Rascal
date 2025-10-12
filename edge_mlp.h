@@ -8,6 +8,8 @@
 #define EMLP_MAX_NODES EMLP_D
 #define EMLPS_BOUND 0.6
 
+#define ACTIVATION SILU
+
 void emlp_init(
 	double weight[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES],
 	double bias[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES]
@@ -16,13 +18,15 @@ double emlp_forward(
 	double x,
 	double weight[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES],
 	double bias[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES],
-	double out[EMLP_NUM_LAYERS][EMLP_MAX_NODES]
+	double out[EMLP_NUM_LAYERS][EMLP_MAX_NODES],
+	double out_ba[EMLP_NUM_LAYERS][EMLP_MAX_NODES]
 );
 double emlp_backprop(
 	double kan_delta,
 	double weight[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES][EMLP_MAX_NODES],
 	double bias[EMLP_NUM_LAYERS - 1][EMLP_MAX_NODES],
 	double out[EMLP_NUM_LAYERS][EMLP_MAX_NODES],
+	double out_ba[EMLP_NUM_LAYERS][EMLP_MAX_NODES],
 	double delta[EMLP_NUM_LAYERS][EMLP_MAX_NODES]
 );
 void emlpk_init(
